@@ -103,15 +103,30 @@ class Environment {
         return path.substring(slash_pos+1);
     }
 
-    void create_new(String path) {
+    Node get_dir_for_new_obj(String path) {
+        // return node for conatining dir. verify it exists and
+        // doesn't contain the object to be created
         Node dir = node_at(dirname(path));
         if (dir.type != NodeType.DIRECTORY)
             throw FileException();
         String fn = filename(path);
         if (dir.children.containsKey(fn))
             throw FileException();
+        
+        return dir;
+    }
 
-        Node new_file = Node.File(fn);
+    void create_new_file(String path) {
+        Node dir = get_dir_for_new_obj(path);
+
+        Node new_file = Node.File(filename(path));
+        dir.set_child(new_file);
+    }
+    
+    void create_new_dir(String path) {
+        Node dir = get_dir_for_new_obj(path);
+
+        Node new_file = Node.Directory(filename(path));
         dir.set_child(new_file);
     }
 }
@@ -128,7 +143,7 @@ class Node {
     String name;
     String contents;
 
-    Node.File(this.name) : type = NodeType.FILE;
+    Node.File(this.name) : type = NodeType.FILE, contents = "";
 
     Node.Directory(this.name) : type = NodeType.DIRECTORY, children = Map<String, Node>();
 
