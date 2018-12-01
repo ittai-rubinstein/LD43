@@ -33,7 +33,7 @@ class Echo extends BaseCommand {
     Echo(List<String> arguments) : super(arguments, 'echo');
 
     String apply(String stdin, Environment env) {
-        return arguments.join(" ");
+        return arguments.join(" ") + "\n";
     }
 }
 
@@ -42,6 +42,9 @@ class Cat extends BaseCommand {
 
     String apply(String stdin, Environment env) {
         List<String> datas = [];
+        if(arguments.length == 0) {
+            return "cat: no arguments given\n";
+        }
         for(String filename in arguments) {
             if(!env.exists(filename)) {
                 datas.add("cat: can't open '$filename': No such file or directory");
@@ -53,7 +56,7 @@ class Cat extends BaseCommand {
             }
             datas.add(env.read_file(filename));
         }
-        return datas.join("\n");
+        return datas.join("\n") + "\n";
     }
 }
 
@@ -77,7 +80,11 @@ class Ls extends BaseCommand {
                 datas.add(env.get_children(filename).join(" "));
             }
         }
-        return datas.join("\n");
+        String ret = datas.join("\n");
+        if(ret.length == 0) {
+            return "";
+        }
+        return ret + "\n";
     }
 }
 
@@ -96,7 +103,11 @@ class Touch extends BaseCommand {
                 datas.add("touch: $path: No such file or directory");
             }
         }
-        return datas.join("\n");
+        String ret = datas.join("\n");
+        if(ret.length == 0) {
+            return "";
+        }
+        return ret + "\n";
     }
 }
 
@@ -119,7 +130,11 @@ class Mkdir extends BaseCommand {
                 datas.add("mkdir: $path: No such file or directory");
             }
         }
-        return datas.join("\n");
+        String ret = datas.join("\n");
+        if(ret.length == 0) {
+            return "";
+        }
+        return ret + "\n";
     }
 }
 
@@ -128,7 +143,7 @@ class Xargs extends BaseCommand {
 
     String apply(String stdin, Environment env) {
         if(arguments.length == 0) {
-            return "xargs: no command specified";
+            return "xargs: no command specified\n";
         }
         BaseCommand cmd_to_run = parse_atomic_command(
             arguments.join(" ") + " " + stdin);
@@ -140,7 +155,7 @@ class Pwd extends BaseCommand {
     Pwd(List<String> arguments) : super(arguments, 'pwd');
 
     String apply(String stdin, Environment env) {
-        return env.pwd();
+        return env.pwd() + "\n";
     }
 }
 
@@ -149,14 +164,14 @@ class Cd extends BaseCommand {
 
     String apply(String stdin, Environment env) {
         if(arguments.length == 0) {
-            return "cd: no path specified";
+            return "cd: no path specified\n";
         }
         String path = arguments[0];
         if(!env.exists(path)) {
-            return "cd: can't cd to $path";
+            return "cd: can't cd to $path\n";
         }
         if(env.get_type(path) == NodeType.FILE) {
-            return "cd: can't cd to $path: not a directory";
+            return "cd: can't cd to $path: not a directory\n";
         }
         env.cd(arguments[0]);
         return "";
