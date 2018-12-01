@@ -1,49 +1,23 @@
 import 'dart:html';
-import 'dart:collection'; 
+// import 'dart:collection'; 
 
-class KeyboardState{
-    // Maintain a mapping from a key to whether of not it is pressed
-    HashMap<String, bool> keys_pressed;
-
-    // Maintain the state of the caps lock
-    bool caps_lock;
-
-    // Useful key codes
-    static const String CAPS_LOCK_KEY = "CapsLock";
-    static const String SHIFT_KEY = "Shift";
-
-    KeyboardState(){
-        window.onKeyDown.listen((KeyboardEvent event) {
-            // Update the keys_pressed map
-            keys_pressed[event.key] = true;
-
-            // Update the caps_lock after the pressing of the caps lock key
-            if (event.key == CAPS_LOCK_KEY) {
-                caps_lock = !caps_lock;
-            }
-        });
-
-        window.onKeyUp.listen((KeyboardEvent event) {
-            // Update the keys_pressed to the key up.
-            keys_pressed[event.key] = false;
-        });
-        caps_lock = false;
-    }
-}
+const DEBUG_CONSOLE = true;
 
 class Console{
     // The command currently being parsed
-    String current_command;
-    String current_address;
-    List commands_and_outputs;
-    KeyboardState keyboard_state;
+    String current_command = "";
+    String current_address = "~";
+    List commands_and_outputs = [];
     
 
     Console(){
-
+        window.onKeyDown.listen(this.KeyboardHandler);
     }
 
     void KeyboardHandler(KeyboardEvent event){
+        if (DEBUG_CONSOLE) {
+            print('Got key ${event.key}');
+        }
         if (event.key.length == 1) {
             AddCharToConsole(event.key);
         } else {
@@ -71,11 +45,15 @@ class Console{
 
     // When parsing user keyboard, this adds the actual character to the command line.
     void AddCharToConsole(String new_character){
+        // print((current_command));
+        // print((new_character));
         current_command += new_character;
     }
 
     String SendCommand(String command){
-        print('Send command $command');
+        if (DEBUG_CONSOLE) {
+            print('Send command $command');
+        }
         return "Answer($command)";
     }
 }
