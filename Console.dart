@@ -6,11 +6,19 @@ const DEBUG_CONSOLE = true;
 class Console{
     // The command currently being parsed
     String current_command = "";
+    // Our current path (for the print beside the line currently being parsed)
     String current_address = "~";
+    // A list of the past commands, outputs and paths (currently only for printing history; in the future perhaps for completions)
     List commands_and_outputs = [];
+    // The canvas on which we will be drawing the code
+    CanvasElement canvas;  
+    // The 2d drawing context
+    CanvasRenderingContext2D drawing_ctx;
     
 
     Console(){
+        canvas = querySelector('#Console');
+        drawing_ctx = canvas.getContext('2d');
         window.onKeyDown.listen(this.KeyboardHandler);
     }
 
@@ -56,5 +64,9 @@ class Console{
             print('Send command $command');
         }
         return "Answer($command)";
+    }
+    // A method that handles the printing of all the console to the string
+    void PrintEntireConsoleToScreen(){
+
     }
 }
