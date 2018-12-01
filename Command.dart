@@ -41,20 +41,47 @@ class Cat extends BaseCommand {
 
     String apply(String stdin, Environment env) {
         List<String> datas;
-//        arguments.forEach(() => ());
         for(String filename in arguments) {
             if(!env.exists(filename)) {
-                datas.add("File $filename does not exist");
+                datas.add("Path $filename does not exist");
+                continue;
             }
-            else {
-                datas.add(env.get_content(filename));
+            if(env.get_type(filename) == NodeType.DIRECTORY) {
+                datas.add("$filename is a directory");
+                continue;
             }
+            datas.add(env.read_file(filename));
         }
-        return datas.join(" ");
+        return datas.join("\n");
     }
 
     String toString() {
         return "cat(" + arguments.join(', ') + ")";
+    }
+}
+
+class Ls extends BaseCommand {
+    Ls(List<String> arguments) : super(arguments);
+
+    String apply(String stdin, Environment env) {
+        List<String> datas;
+        for(String filename in arguments) {
+            if(!env.exists(filename)) {
+                datas.add("Path $filename does not exist");
+                continue;
+            }
+            if(env.get_type(filename) == NodeType.FILE) {
+                datas.add(filename);
+            }
+            else {
+                datas.add(env.get_children(filename).join(" "));
+            }
+        }
+        return datas.join("\n");
+    }
+
+    String toString() {
+        return "ls(" + arguments.join(', ') + ")";
     }
 }
 
