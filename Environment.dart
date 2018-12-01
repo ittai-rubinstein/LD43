@@ -118,16 +118,18 @@ class Environment {
 
     void create_new_file(String path) {
         Node dir = get_dir_for_new_obj(path);
-
         Node new_file = Node.File(filename(path));
         dir.set_child(new_file);
     }
     
     void create_new_dir(String path) {
         Node dir = get_dir_for_new_obj(path);
-
         Node new_file = Node.Directory(filename(path));
         dir.set_child(new_file);
+    }
+
+    String pwd() {
+        return path_to_node(curDir);
     }
 }
 
