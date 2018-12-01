@@ -1,7 +1,10 @@
+<<<<<<< HEAD
+import 'Console.dart';
 import "Command.dart";
 import 'dart:io';
 
 void main() {
+    var con = new Console();
     while(true) {
         stdout.writeln('Enter a command:');
         String input = stdin.readLineSync();
