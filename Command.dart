@@ -151,7 +151,15 @@ class Cd extends BaseCommand {
         if(arguments.length == 0) {
             return "cd: no path specified";
         }
-        return env.cd(arguments[0]);
+        String path = arguments[0];
+        if(!env.exists(path)) {
+            return "cd: can't cd to $path";
+        }
+        if(env.get_type(path) == NodeType.FILE) {
+            return "cd: can't cd to $path: not a directory";
+        }
+        env.cd(arguments[0]);
+        return "";
     }
 }
 
