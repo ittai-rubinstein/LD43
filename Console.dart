@@ -45,8 +45,9 @@ class Console{
 
     // When parsing user keyboard, this adds the actual character to the command line.
     void AddCharToConsole(String new_character){
-        // print((current_command));
-        // print((new_character));
+        if (DEBUG_CONSOLE) {
+            print('Got the character ${new_character}');
+        }
         current_command += new_character;
     }
 
