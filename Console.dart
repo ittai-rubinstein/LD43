@@ -19,22 +19,26 @@ class Console{
     String machine_name = "linux";
     
     // The highest point visible in the screen:
-    static const num Y_MIN_POS = 15;
+    static const num Y_MIN_POS = 20;
     // The leftmost point visible in the screen:
     static const int X_MIN_POS = 7;
     // The converse values depend upon the window size (which may be dynamic?)
-    int GetMaxYPos(){
+    num GetMaxYPos(){
         return canvas.height - Y_MIN_POS;
     }
-    int GetMaxXPos(){
+    num GetMaxXPos(){
         return canvas.width - X_MIN_POS;
     }
     // How far down we need to jump between lines:
     static const int LINE_HEIGHT = Y_MIN_POS;
 
-    // The Y axis position of the current line being edited. All other prints will be relative to this value.
+    // The position of the current line being edited. These values will be updated as the prints goes on.
     num YPosCurrLine = Y_MIN_POS;
     num XPosCurrPrint = X_MIN_POS;
+
+    // This is the height of the newest line in the code. Is currently set to the bottom of the screen.
+    // TODO: make this "dynamic" (i.e. the scroll goes up and down, and this starts the top of screen).
+    num NewestLineYPos;
 
     // The width of a character. Measured in a horani manner.
     // TODO: improve the accuracy.
@@ -52,9 +56,14 @@ class Console{
         canvas.width = canvas.clientWidth;
         canvas.height = canvas.clientHeight;
 
+        // Initialize the printing head to the botoom of the screen. Later, this should be changed.
+        NewestLineYPos = GetMaxYPos();
+
+        PrintAllTerminal();
+
         // Junk. To be removed...
 
-        PrintCommandLine("~", "echo hello world");
+        // PrintCommandLine("~", "echo hello world");
         // print(canvas.width);
         // print(canvas.height);
         // print(canvas.clientWidth);
@@ -65,8 +74,55 @@ class Console{
         // ctx.fillText(" " + "a" * 50,7,30);
     }
 
+    /**
+     * Ends the line currently being printed, and returns the carrage
+     */
+    void GoToNewLine(){
+        XPosCurrPrint = X_MIN_POS;
+        YPosCurrLine += LINE_HEIGHT;
+    }
+
+    /**
+     * Prints the result of a command (different color pallet from commands?)
+     */
+    void PrintResult(String result){
+        ctx.fillStyle = "Cyan";
+        PrintStringToScreenMultipleLines(result);
+    }
+
+    /**
+     * Prints all the terminals content into the console.
+     */
+    void PrintAllTerminal(){
+        canvas.width = canvas.clientWidth;
+        canvas.height = canvas.clientHeight;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // Compute the Y axis of the first line to be printed:
+        num NumLines = GetTotalNumLines();
+        num BaseYPos = NewestLineYPos - ((NumLines - 1) * LINE_HEIGHT);
+        // Set the printing head to the start of the print:
+        XPosCurrPrint = X_MIN_POS;
+        YPosCurrLine = BaseYPos;
+        // Print the past values:
+        for (var past_command in commands_and_outputs) {
+            // Unpack the past_command
+            String path = past_command[0];
+            String command = past_command[1];
+            String result = past_command[2];
+            // Produce the print for the command itself, and count its lines:
+            PrintCommandLine(path, command);
+            // Go to a new line to print the result:
+            GoToNewLine();
+            // Print the result
+            PrintResult(result);
+            GoToNewLine();
+        }
+        // Add the command currently being written:
+        PrintCommandLine(current_address, current_command);
+    }
+
     // Prints a string that is not expected to require a new line
-    // Updates the 
+    // Updates the XPosCurrPrint Accordingly
     void PrintStringToScreenSimple(String message){
         ctx.fillText(message, XPosCurrPrint, YPosCurrLine);
         print(XPosCurrPrint);
@@ -79,7 +135,7 @@ class Console{
      */
     void PrintStringToScreenMultipleLines(String message){
         // Set the font all the time
-        ctx.font = "18px Times New Roman";
+        ctx.font = "18px monospace";
         // While we still have data to print:
         while (message.isNotEmpty) {
             // If all the data fits in one line, we print it, and don't go to a new line
@@ -90,8 +146,7 @@ class Console{
             // from the data to be printed.
             } else {
                 message.substring(0,((GetMaxXPos() - XPosCurrPrint) / CHARACTER_WIDTH).floor());
-                XPosCurrPrint = X_MIN_POS;
-                YPosCurrLine += LINE_HEIGHT;
+                GoToNewLine();
                 message = message.substring(((GetMaxXPos() - XPosCurrPrint) / CHARACTER_WIDTH).floor());
             }
         }
@@ -109,7 +164,7 @@ class Console{
         ctx.fillStyle = "blue";
         PrintStringToScreenMultipleLines("$path");
         // For the "$ " and the command itself, we want a white font again
-        ctx.fillStyle = "white";
+        ctx.fillStyle = "White";
         PrintStringToScreenMultipleLines("\$ $command");
     }
 
@@ -182,7 +237,8 @@ class Console{
         // clears the command
         current_command = "";
         // TODO: change this to get the current address from the Linux system.
-        current_address = "";
+        current_address = current_address;
+        PrintAllTerminal();
     }
 
     // When parsing user keyboard, this adds the actual character to the command line.
@@ -191,6 +247,7 @@ class Console{
             print('Got the character ${new_character}');
         }
         current_command += new_character;
+        // PrintSingleCharToCommand(new_character);
     }
 
     String SendCommand(String command){
