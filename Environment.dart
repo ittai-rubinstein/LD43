@@ -42,13 +42,11 @@ class Environment {
         }
         for (var component in path.split("/")) {
             if (ptr.type == NodeType.FILE)
-                return null;
+                throw FileException();
             if (ptr.type == NodeType.LINK) {
                 if (recursion_limit == 0)
-                    return null;
+                    throw FileException();
                 ptr = node_at(ptr.contents, recursion_limit: recursion_limit-1, start_from: ptr);
-                if (ptr == null)
-                    return null;
                 continue;
             }
             if (component == '.' || component == '')
@@ -57,27 +55,64 @@ class Environment {
                 ptr = ptr.parent;
                 continue;
             }
-            ptr = ptr.get_child(component);
+            if (!ptr.children.containsKey(component))
+                throw FileException();
+            ptr = ptr.children[component];
         }
         return ptr;
     }
 
-    bool exists(String path) => node_at(path) != null;
+    bool exists(String path) {
+        try {
+            node_at(path);
+            return true;
+        } on FileException catch (e) {
+            return false;
+        }
+    }
 
-    NodeType get_type(String path) {
+    NodeType get_type(String path) => node_at(path).type;
+
+    List<String> get_children(String path) {
         Node node = node_at(path);
-        if (node == null)
+        if (node.type != NodeType.DIRECTORY)
             throw FileException();
-        return node.type;
+        return node.children.keys;
     }
 
     String read_file(String path) {
         Node file = node_at(path);
-        if (file == null)
-            throw FileException();
         if (file.type != NodeType.FILE)
             throw FileException();
         return file.contents;
+    }
+
+    String dirname(String path) {
+        if (!path.contains('/'))
+            return '';  // file in current directory
+        
+        var slash_pos = path.lastIndexOf('/');
+        return path.substring(0, slash_pos);
+    }
+
+    String filename(String path) {
+        if (!path.contains('/'))
+            return path;  // file in current directory
+        
+        var slash_pos = path.lastIndexOf('/');
+        return path.substring(slash_pos+1);
+    }
+
+    void create_new(String path) {
+        Node dir = node_at(dirname(path));
+        if (dir.type != NodeType.DIRECTORY)
+            throw FileException();
+        String fn = filename(path);
+        if (dir.children.containsKey(fn))
+            throw FileException();
+
+        Node new_file = Node.File(fn);
+        dir.set_child(new_file);
     }
 }
 
@@ -93,16 +128,21 @@ class Node {
     String name;
     String contents;
 
-    Node get_child(String component) => children[component];
+    Node.File(this.name) : type = NodeType.FILE;
+
+    Node.Directory(this.name) : type = NodeType.DIRECTORY, children = Map<String, Node>();
+
+    void set_child(Node file) {
+        file.parent = this;
+        children[file.name] = file;
+    }
 }
 
 class FileSystem {
     Node root;
 
     FileSystem() {
-        root = Node();
+        root = Node.Directory('');
         root.parent = root;
-        root.type = NodeType.DIRECTORY;
-        root.children = Map<String, Node>();
     }
 }
