@@ -11,10 +11,11 @@ class Environment {
     }
 
     String absolute_path(String path) {
-        var end_node = node_at(path);
-        if (end_node == null)
-            throw FileException();
-        return path_to_node(end_node);
+        var location = get_insertion_point(path);
+        String result = path_to_node(location.dir);
+        if (location.name != '')
+            result += '/${location.name}';
+        return result;
     }
 
     String path_to_node(Node node) {
@@ -28,63 +29,98 @@ class Environment {
         return result;
     }
 
-    Node node_at(String path, {int recursion_limit = 100, Node start_from = null}) {
-        Node ptr;
+    InsertionPoint get_insertion_point(String path, {int recursion_limit = 100, Node start_from = null}) {
+        InsertionPoint ptr;
         if (start_from == null)
             start_from = curDir;
         if (path == '')
-            return start_from;
+            return InsertionPoint(start_from);
         if (path[0] == '/') {
-            ptr = filesys.root;
+            ptr = InsertionPoint(filesys.root);
             path = path.substring(1);
         } else {
-            ptr = start_from;
+            ptr = InsertionPoint(start_from);
         }
-        for (var component in path.split("/")) {
-            if (ptr.type == NodeType.FILE)
-                throw FileException();
-            if (ptr.type == NodeType.LINK) {
-                if (recursion_limit == 0)
-                    throw FileException();
-                ptr = node_at(ptr.contents, recursion_limit: recursion_limit-1, start_from: ptr);
-                continue;
-            }
+        List<String> path_components = path.split("/");
+        for (int i = 0;i < path_components.length;i++) {
+            String component = path_components[i];
+            if (ptr.name != '')
+                throw FileException();  // either a file or a non-existing object
             if (component == '.' || component == '')
                 continue;
             if (component == '..') {
-                ptr = ptr.parent;
+                ptr.dir = ptr.dir.parent;
                 continue;
             }
-            if (!ptr.children.containsKey(component))
-                throw FileException();
-            ptr = ptr.children[component];
+            if (!ptr.dir.children.containsKey(component)) {
+                // point to the non-exiting child
+                ptr.name = component;
+                continue;
+            }
+            Node child = ptr.dir.children[component];
+
+            switch (child.type) {
+                case NodeType.DIRECTORY:
+                    ptr.dir = child;
+                    break;
+                case NodeType.FILE:
+                    ptr.name = component;
+                    break;
+                case NodeType.LINK:
+                    if (recursion_limit == 0)
+                        throw FileException();
+                    ptr = get_insertion_point(child.contents, 
+                            recursion_limit: recursion_limit-1, start_from: ptr.dir);
+            }
+            // here we're about to exit the loop. ptr must point to file / directory
         }
         return ptr;
     }
 
+    Node get_parent_dir(String path) {
+        Node result = get_insertion_point(dirname(path)).get_node();
+        if (result.type != NodeType.DIRECTORY)
+            throw FileException();
+        return result;
+    }
+
     bool exists(String path) {
         try {
-            node_at(path);
-            return true;
+            return get_insertion_point(path).exists();
         } on FileException catch (e) {
+            // failed to get the insertion point
             return false;
         }
     }
 
-    NodeType get_type(String path) => node_at(path).type;
+    NodeType get_type(String path) => get_insertion_point(path).get_node().type;
+
+    bool is_link(String path) {
+        Node container = get_parent_dir(path);
+        if (!container.children.containsKey(filename(path)))
+            throw FileException();
+        return container.children[filename(path)].type == NodeType.LINK;
+    }
 
     List<String> get_children(String path) {
-        Node node = node_at(path);
+        Node node = get_insertion_point(path).get_node();
         if (node.type != NodeType.DIRECTORY)
             throw FileException();
         return node.children.keys.toList();
     }
 
     String read_file(String path) {
-        Node file = node_at(path);
+        Node file = get_insertion_point(path).get_node();
         if (file.type != NodeType.FILE)
             throw FileException();
         return file.contents;
+    }
+
+    void write_file(String path, String content) {
+        Node file = get_insertion_point(path).get_node();
+        if (file.type != NodeType.FILE)
+            throw FileException();
+        file.contents = content;
     }
 
     String dirname(String path) {
@@ -103,31 +139,22 @@ class Environment {
         return path.substring(slash_pos+1);
     }
 
-    Node get_dir_for_new_obj(String path) {
-        // return node for conatining dir. verify it exists and
-        // doesn't contain the object to be created
-        Node dir = node_at(dirname(path));
-        if (dir.type != NodeType.DIRECTORY)
-            throw FileException();
-        String fn = filename(path);
-        if (dir.children.containsKey(fn))
-            throw FileException();
-        
-        return dir;
-    }
-
     void create_new_file(String path, [String content = null]) {
-        Node dir = get_dir_for_new_obj(path);
+        InsertionPoint location = get_insertion_point(path);
+        if (location.exists())
+            throw FileException();
         Node new_file = Node.File(filename(path));
         if (content != null)
             new_file.contents = content;
-        dir.set_child(new_file);
+        location.dir.set_child(new_file);
     }
     
     void create_new_dir(String path) {
-        Node dir = get_dir_for_new_obj(path);
-        Node new_file = Node.Directory(filename(path));
-        dir.set_child(new_file);
+        InsertionPoint location = get_insertion_point(path);
+        if (location.exists())
+            throw FileException();
+        Node new_dir = Node.Directory(filename(path));
+        location.dir.set_child(new_dir);
     }
 
     String pwd() {
@@ -135,14 +162,45 @@ class Environment {
     }
 
     void cd(String path) {
-        curDir = node_at(path);
+        Node target = get_insertion_point(path).get_node();
+        if (target.type != NodeType.DIRECTORY)
+            throw FileException();
+        curDir = target;
     }
 
-    void set_file_content(String path, String content) {
-        node_at(path).contents = content;
+    void rm(String path) {
+        Node container = get_parent_dir(path);
+        if (!container.children.containsKey(filename(path)))
+            throw FileException();
+        container.children.remove(filename(path));
     }
 
-    String get_file_content(String path) => node_at(path).contents;
+    void rmdir(String path) {
+        Node container = get_parent_dir(path);
+        if (!container.children.containsKey(filename(path))) 
+            throw FileException();
+        Node target = container.children[filename(path)];
+        if (target.type != NodeType.DIRECTORY)
+            throw FileException();
+        if (target.children.length != 0)
+            throw FileException();
+        if (identical(target, curDir))
+            throw FileException();
+        container.children.remove(filename(path));
+    }
+
+    void duplicate(String from, String to) {
+        Node from_container = get_parent_dir(from);
+        if (!from_container.children.containsKey(filename(from)))
+            throw FileException();
+        Node from_node = from_container.children[filename(from)];
+        if (from_node.type == NodeType.DIRECTORY)
+            throw FileException();
+        Node to_container = get_parent_dir(to);
+        if (to_container.children.containsKey(filename(to)))
+            throw FileException();
+        to_container.children[filename(to)] = from_node;
+    }
 }
 
 enum NodeType {
@@ -164,6 +222,24 @@ class Node {
     void set_child(Node file) {
         file.parent = this;
         children[file.name] = file;
+    }
+}
+
+class InsertionPoint {
+    Node dir;  // always a directory
+    String name;
+    InsertionPoint(this.dir,[this.name = '']);
+    bool exists() {
+        if (name == '')
+            return true;  // this is a directory, not a file
+        return dir.children.containsKey(name);
+    }
+    Node get_node() {
+        if (name == '')
+            return dir;
+        if (!dir.children.containsKey(name))
+            throw FileException();
+        return dir.children[name];
     }
 }
 

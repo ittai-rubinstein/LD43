@@ -8,16 +8,16 @@ class SwapLevel {
         var env = Environment();
         env.create_new_file("/sun");
         env.create_new_file("/moon");
-        env.set_file_content("/sun", SUN);
-        env.set_file_content("/moon", MOON);
+        env.write_file("/sun", SUN);
+        env.write_file("/moon", MOON);
         return env;
     }
 
     bool is_solved(Environment env) {
         try {
-            if (env.get_file_content("/sun") != MOON)
+            if (env.read_file("/sun") != MOON)
                 return false;
-            if (env.get_file_content("/moon") != SUN)
+            if (env.read_file("/moon") != SUN)
                 return false;
         } catch (e) {
             return false;
