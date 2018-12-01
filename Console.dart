@@ -42,7 +42,7 @@ class Console{
 
     // The width of a character. Measured in a horani manner.
     // TODO: improve the accuracy.
-    static const CHARACTER_WIDTH = 8.196;
+    static const num CHARACTER_WIDTH = 10.8369140625;
     
 
     Console(){
@@ -60,6 +60,7 @@ class Console{
         NewestLineYPos = GetMaxYPos();
 
         PrintAllTerminal();
+        print("Character width should be ${ctx.measureText("a").width}");
 
         // Junk. To be removed...
 
@@ -140,12 +141,18 @@ class Console{
         while (message.isNotEmpty) {
             // If all the data fits in one line, we print it, and don't go to a new line
             if ((XPosCurrPrint + (CHARACTER_WIDTH * message.length)) < GetMaxXPos()) {
+                if (DEBUG_CONSOLE) {
+                    print('Printing $message to single line.');
+                }
                 PrintStringToScreenSimple(message);
                 break;
             // Otherwise, we print what we can to this line, then jump to the next line, and remove what needs to be removed
             // from the data to be printed.
             } else {
-                message.substring(0,((GetMaxXPos() - XPosCurrPrint) / CHARACTER_WIDTH).floor());
+                if (DEBUG_CONSOLE) {
+                    print('Printing ${message.substring(0,((GetMaxXPos() - XPosCurrPrint) / CHARACTER_WIDTH).floor())} to single line.');
+                }
+                 PrintStringToScreenSimple(message.substring(0,((GetMaxXPos() - XPosCurrPrint) / CHARACTER_WIDTH).floor()));
                 GoToNewLine();
                 message = message.substring(((GetMaxXPos() - XPosCurrPrint) / CHARACTER_WIDTH).floor());
             }
@@ -247,7 +254,15 @@ class Console{
             print('Got the character ${new_character}');
         }
         current_command += new_character;
-        // PrintSingleCharToCommand(new_character);
+        PrintSingleCharToCommand(new_character);
+    }
+
+    void PrintSingleCharToCommand(String new_char){
+        if (GetMaxXPos() > XPosCurrPrint + CHARACTER_WIDTH) {
+            PrintStringToScreenSimple(new_char);
+        } else {
+            PrintAllTerminal();
+        }
     }
 
     String SendCommand(String command){
