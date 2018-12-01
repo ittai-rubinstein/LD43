@@ -1,0 +1,42 @@
+notes
+
+commands to add:
+simple - tee, dirname, realpath, swap (do we want this? easily solves first level)
+medium - ln, mklink, readlink (but everything will break)
+hard - tar, which (includes environment variables)
+
+concepts to add: > < PATH (maybe no need for PATH)
+
+alias? might be nice
+
+reboot <-> retry level
+?? <-> restart game
+
+man
+
+level ideas:
+
+-- swap two files
+-- create something that does >
+	-- (cat, |, tee)
+-- copy a file
+	-- (cat, >)
+-- copy a directory without cp
+	-- (xargs, find, cat, >)
+	-- (tar, cat, >)
+-- copy each file into its own directory with the same name
+-- flatten a directory
+-- flatten a directory with non-unique names (renaming is ok)
+-- make 20 files (in only a few commands)
+-- make a link to a directory in itself
+-- create commands from others (for example the > from before)
+
+sacrifice options:
+-- pick one out of everything (seems hard to balance)
+-- pick one out of a few options (seems ok)
+-- pick one out of those you used (seems like the first one if you're a smartass)
+
+funny stuff we might use:
+-- ls a->b b->a: too many levels
+-- touch a name that is a link to a non existant file makes it (touch+rm is weird)
+-- cd into a link then cd .. is BROKEN, we don't implement this way
