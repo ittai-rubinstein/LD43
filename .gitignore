@@ -17,4 +17,6 @@ doc/api/
 
 # Remove Visual Studio Code's folder
 .vscode/
+
+
 test.dart
