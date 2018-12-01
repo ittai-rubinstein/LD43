@@ -123,10 +123,21 @@ class Environment {
         file.contents = content;
     }
 
+    String trim_trailing_slash(String path) {
+        while (path.length > 0 && path[path.length - 1] == '/')
+            path = path.substring(0, path.length - 1);
+
+        return path;
+    }
+
     String dirname(String path) {
         if (!path.contains('/'))
             return '';  // file in current directory
-        
+
+        path = trim_trailing_slash(path);
+        if (path.length == 0)
+            return '/';   // path was all slashes
+
         var slash_pos = path.lastIndexOf('/');
         return path.substring(0, slash_pos);
     }
@@ -135,6 +146,9 @@ class Environment {
         if (!path.contains('/'))
             return path;  // file in current directory
         
+        path = trim_trailing_slash(path);
+        if (path == '')
+            return '';
         var slash_pos = path.lastIndexOf('/');
         return path.substring(slash_pos+1);
     }
