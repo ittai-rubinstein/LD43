@@ -28,20 +28,30 @@ class Environment {
         return result;
     }
 
-    Node node_at(String path) {
+    Node node_at(String path, {int recursion_limit = 100, Node start_from = null}) {
         Node ptr;
+        if (start_from == null)
+            start_from = curDir;
         if (path == '')
-            return curDir;
+            return start_from;
         if (path[0] == '/') {
             ptr = filesys.root;
             path = path.substring(1);
         } else {
-            ptr = curDir;
+            ptr = start_from;
         }
         for (var component in path.split("/")) {
-            if (ptr.type != NodeType.DIRECTORY)
+            if (ptr.type == NodeType.FILE)
                 return null;
-            if (component == '.')
+            if (ptr.type == NodeType.LINK) {
+                if (recursion_limit == 0)
+                    return null;
+                ptr = node_at(ptr.contents, recursion_limit: recursion_limit-1, start_from: ptr);
+                if (ptr == null)
+                    return null;
+                continue;
+            }
+            if (component == '.' || component == '')
                 continue;
             if (component == '..') {
                 ptr = ptr.parent;
@@ -53,6 +63,22 @@ class Environment {
     }
 
     bool exists(String path) => node_at(path) != null;
+
+    NodeType get_type(String path) {
+        Node node = node_at(path);
+        if (node == null)
+            throw FileException();
+        return node.type;
+    }
+
+    String read_file(String path) {
+        Node file = node_at(path);
+        if (file == null)
+            throw FileException();
+        if (file.type != NodeType.FILE)
+            throw FileException();
+        return file.contents;
+    }
 }
 
 enum NodeType {
@@ -65,6 +91,7 @@ class Node {
     NodeType type;
     Node parent;
     String name;
+    String contents;
 
     Node get_child(String component) => children[component];
 }
