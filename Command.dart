@@ -123,14 +123,6 @@ class Mkdir extends BaseCommand {
     }
 }
 
-class Pwd extends BaseCommand {
-    Pwd(List<String> arguments) : super(arguments, 'pwd');
-
-    String apply(String stdin, Environment env) {
-        return env.pwd();
-    }
-}
-
 class Xargs extends BaseCommand {
     Xargs(List<String> arguments) : super(arguments, 'xargs');
 
@@ -141,6 +133,25 @@ class Xargs extends BaseCommand {
         BaseCommand cmd_to_run = parse_atomic_command(
             arguments.join(" ") + " " + stdin);
         return cmd_to_run.apply("", env);
+    }
+}
+
+class Pwd extends BaseCommand {
+    Pwd(List<String> arguments) : super(arguments, 'pwd');
+
+    String apply(String stdin, Environment env) {
+        return env.pwd();
+    }
+}
+
+class Cd extends BaseCommand {
+    Cd(List<String> arguments) : super(arguments, 'cd');
+
+    String apply(String stdin, Environment env) {
+        if(arguments.length == 0) {
+            return "cd: no path specified";
+        }
+        return env.cd(arguments[0]);
     }
 }
 
@@ -168,6 +179,7 @@ BaseCommand command_name_and_arguments_to_command(String cmd_name, List<String> 
         case 'xargs': return Xargs(arguments); break;
         case 'mkdir': return Mkdir(arguments); break;
         case 'pwd': return Pwd(arguments); break;
+        case 'cd': return Cd(arguments); break;
         default: throw ParseException("No command named $cmd_name");
     }
 }
