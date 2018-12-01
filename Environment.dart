@@ -1,4 +1,5 @@
 import 'FileSystem.dart';
+import 'utils.dart';
 
 class Environment {
     FileSystem filesys;
@@ -16,5 +17,13 @@ class Environment {
         else {
             absolute_path = env_variables["pwd"] + unsanitized_path;
         }
+    }
+
+    String get_content(String filename) {
+        return "Content($filename)";
+    }
+
+    bool exists(String filename) {
+        return true;
     }
 }
