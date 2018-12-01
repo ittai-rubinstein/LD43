@@ -77,7 +77,7 @@ class Environment {
         Node node = node_at(path);
         if (node.type != NodeType.DIRECTORY)
             throw FileException();
-        return node.children.keys;
+        return node.children.keys.toList();
     }
 
     String read_file(String path) {

@@ -41,7 +41,7 @@ class Cat extends BaseCommand {
     Cat(List<String> arguments) : super(arguments, 'cat');
 
     String apply(String stdin, Environment env) {
-        List<String> datas;
+        List<String> datas = [];
         for(String filename in arguments) {
             if(!env.exists(filename)) {
                 datas.add("cat: can't open '$filename': No such file or directory");
@@ -61,7 +61,7 @@ class Ls extends BaseCommand {
     Ls(List<String> arguments) : super(arguments, 'ls');
 
     String apply(String stdin, Environment env) {
-        List<String> datas;
+        List<String> datas = [];
         for(String filename in arguments) {
             if(!env.exists(filename)) {
                 datas.add("ls: $filename: No such file or directory");
@@ -82,15 +82,35 @@ class Touch extends BaseCommand {
     Touch(List<String> arguments) : super(arguments, 'touch');
 
     String apply(String stdin, Environment env) {
-        List<String> datas;
+        List<String> datas = [];
         for(String path in arguments) {
             if(env.exists(path)) {
                 continue;
             }
             try {
-                env.create_new(path);
+                env.create_new_file(path);
             } on FileException catch(e) {
                 datas.add("touch: $path: No such file or directory");
+            }
+        }
+        return datas.join("\n");
+    }
+}
+
+class Mkdir extends BaseCommand {
+    Mkdir(List<String> arguments) : super(arguments, 'mkdir');
+
+    String apply(String stdin, Environment env) {
+        List<String> datas = [];
+        for(String path in arguments) {
+            if(env.exists(path)) {
+                datas.add("mkdir: can't create directory '$path': File exists");
+                continue;
+            }
+            try {
+                env.create_new_dir(path);
+            } on FileException catch(e) {
+                datas.add("mkdir: $path: No such file or directory");
             }
         }
         return datas.join("\n");
@@ -126,10 +146,13 @@ class ParseException implements Exception {
 }
 
 BaseCommand command_name_and_arguments_to_command(String cmd_name, List<String> arguments) {
-    cmd_name = cmd_name.toLowerCase();
     switch(cmd_name) {
         case 'cat': return Cat(arguments); break;
         case 'echo': return Echo(arguments); break;
+        case 'ls': return Ls(arguments); break;
+        case 'touch': return Touch(arguments); break;
+        case 'xargs': return Xargs(arguments); break;
+        case 'mkdir': return Mkdir(arguments); break;
         default: throw ParseException("No command named $cmd_name");
     }
 }
