@@ -116,9 +116,11 @@ class Environment {
         return dir;
     }
 
-    void create_new_file(String path) {
+    void create_new_file(String path, [String content = null]) {
         Node dir = get_dir_for_new_obj(path);
         Node new_file = Node.File(filename(path));
+        if (content != null)
+            new_file.contents = content;
         dir.set_child(new_file);
     }
     
@@ -135,6 +137,12 @@ class Environment {
     void cd(String path) {
         curDir = node_at(path);
     }
+
+    void set_file_content(String path, String content) {
+        node_at(path).contents = content;
+    }
+
+    String get_file_content(String path) => node_at(path).contents;
 }
 
 enum NodeType {
