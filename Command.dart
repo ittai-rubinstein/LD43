@@ -4,6 +4,10 @@ List<String> get_absolute_children(String path, Environment env) {
     return env.get_children(path).map((child) => env.absolute_path(path + "/" + child)).toList();
 }
 
+List<String> get_relative_children(String path, Environment env) {
+    return env.get_children(path).map((child) => path + "/" + child).toList();
+}
+
 class LinuxException implements Exception {
     String cause;
     LinuxException(this.cause);
@@ -185,12 +189,12 @@ class Cd extends BaseCommand {
 }
 
 List<String> _find_impl(String path, Environment env) {
-    List<String> ret = [path];
+    List<String> ret = [env.trim_trailing_slash(path)];
     if(env.is_link(path)) {
         return ret;
     }
     if(env.get_type(path) == NodeType.DIRECTORY) {
-        for (String child in get_absolute_children(path, env)) {
+        for (String child in get_relative_children(path, env)) {
             ret += _find_impl(child, env);
         }
     }
@@ -250,7 +254,6 @@ void _cp_impl(String from, String to, Environment env) {
 
 // Returns the list of errors
 List<String> _cpr_impl(String from, String to, Environment env) {
-    print("CPR: $from -> $to");
     if(env.absolute_path(to).indexOf(env.absolute_path(from)) != -1) {
         return ["recustion detected at '$to': omitting"];
     }
@@ -260,17 +263,21 @@ List<String> _cpr_impl(String from, String to, Environment env) {
     if(env.get_type(from) != NodeType.DIRECTORY) {
         throw Exception("Internal error!");
     }
+    String real_target;
     if(!env.exists(to)) {
         try {
             env.create_new_dir(to);
         } on FileException catch(e) {
             return ["can't stat '$to': No such file or directory"];
         }
+        real_target = to;
     }
-    if(env.get_type(to) != NodeType.DIRECTORY) {
-        return ["target '$to' is not a directory"];
+    else {
+        if(env.get_type(to) != NodeType.DIRECTORY) {
+            return ["target '$to' is not a directory"];
+        }
+        real_target = to + "/" + env.filename(from);
     }
-    String real_target = to + "/" + env.filename(from);
     if(!env.exists(real_target)) {
         try {
             env.create_new_dir(real_target);
@@ -280,7 +287,6 @@ List<String> _cpr_impl(String from, String to, Environment env) {
     }
     List<String> ret = [];
     for(String child in get_absolute_children(from, env)) {
-        print("bad wolf: $from -> $child");
         if(env.is_link(child) || (env.get_type(child) == NodeType.FILE)) {
             String new_target = real_target + "/" + env.filename(child);
             try {
@@ -397,6 +403,55 @@ class Rm extends BaseCommand {
     }
 }
 
+List<String> _mv_impl(String from, String to, Environment env) {
+    try {
+        if(env.is_link(from)) {}
+    } on FileException catch(e) {
+        return ["$from - no such file or directory"];
+    }
+    String real_target;
+    try {
+        if(env.is_link(to)) {
+            if(env.get_type(to) == NodeType.DIRECTORY) {
+                real_target = to + "/" + env.filename(from);
+            }
+            else {
+                _rm_impl(to, env); // Not checking errors! (kind of on purpose I guess)
+                real_target = from;
+            }
+        }
+    } on FileException catch(e) {
+        _rm_impl(to, env); // Not checking errors! (kind of on purpose I guess)
+        real_target = from;
+    }
+    if(env.is_link(from)) {
+        env.duplicate(from, to);
+    }
+    else {
+        _cp_united_impl(from, to, env);
+    }
+    return _rm_impl(from, env);
+}
+
+class Mv extends BaseCommand {
+    Mv(List<String> arguments) : super(arguments, 'mv');
+
+    String apply(String stdin, Environment env) {
+        if(arguments.length != 2) {
+            return "Unexpected number of arguments\n";
+        }
+        List<String> ret = _mv_impl(arguments[0], arguments[1], env);
+        List<String> real_ret = [];
+        for(String error in ret) {
+            real_ret.add("mv: " + error);
+        }
+        if(real_ret.length == 0) {
+            return "";
+        }
+        return real_ret.join("\n") + "\n";
+    }
+}
+
 class EmptyCommand extends BaseCommand {
     EmptyCommand(List<String> arguments) : super(arguments, 'empty_command') {
         assert(arguments.length == 0);
@@ -425,6 +480,7 @@ BaseCommand command_name_and_arguments_to_command(String cmd_name, List<String> 
         case 'find': return Find(arguments); break;
         case 'cp': return Cp(arguments); break;
         case 'rm': return Rm(arguments); break;
+        case 'mv': return Mv(arguments); break;
         default: throw ParseException("No command named $cmd_name");
     }
 }
