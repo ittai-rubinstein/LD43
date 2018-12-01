@@ -1,7 +1,7 @@
 import "Environment.dart";
 
 List<String> get_absolute_children(String path, Environment env) {
-    return env.get_children(path).map((child) => (path + "/" + child)).toList();
+    return env.get_children(path).map((child) => env.absolute_path(path + "/" + child)).toList();
 }
 
 class LinuxException implements Exception {
@@ -86,7 +86,7 @@ class Ls extends BaseCommand {
                 datas.add(filename);
             }
             else {
-                datas.add(get_absolute_children(filename, env).join(" "));
+                datas.add(env.get_children(filename).join(" "));
             }
         }
         String ret = datas.join("\n");
@@ -226,7 +226,7 @@ void _cp_impl(String from, String to, Environment env) {
             env.rm(to);
         }
         else {
-            String new_target = to + env.filename(from);
+            String new_target = to + "/" + env.filename(from);
             if(env.exists(new_target)) {
                 if(env.get_type(new_target) == NodeType.FILE) {
                     env.rm(new_target);
@@ -247,6 +247,10 @@ void _cp_impl(String from, String to, Environment env) {
 
 // Returns the list of errors
 List<String> _cpr_impl(String from, String to, Environment env) {
+    print("CPR: $from -> $to");
+    if(env.absolute_path(to).indexOf(env.absolute_path(from)) != -1) {
+        return ["recustion detected at '$to': omitting"];
+    }
     if(!env.exists(from)) {
         return ["can't stat '$from': No such file or directory"];
     }
@@ -263,7 +267,7 @@ List<String> _cpr_impl(String from, String to, Environment env) {
     if(env.get_type(to) != NodeType.DIRECTORY) {
         return ["target '$to' is not a directory"];
     }
-    String real_target = to + env.filename(to);
+    String real_target = to + "/" + env.filename(from);
     if(!env.exists(real_target)) {
         try {
             env.create_new_dir(real_target);
@@ -273,8 +277,9 @@ List<String> _cpr_impl(String from, String to, Environment env) {
     }
     List<String> ret = [];
     for(String child in get_absolute_children(from, env)) {
+        print("bad wolf: $from -> $child");
         if(env.is_link(child) || (env.get_type(child) == NodeType.FILE)) {
-            String new_target = real_target + env.filename(child);
+            String new_target = real_target + "/" + env.filename(child);
             try {
                 _cp_impl(child, new_target, env);
             } on LinuxException catch(e) {
@@ -296,6 +301,7 @@ List<String> _cp_united_impl(String from, String to, Environment env) {
     if(env.get_type(from) == NodeType.FILE) {
         try {
             _cp_impl(from, to, env);
+            return [];
         } on LinuxException catch(e) {
             return [e.cause];
         }

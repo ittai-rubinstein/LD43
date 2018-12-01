@@ -14,14 +14,12 @@ class Environment {
         var location = get_insertion_point(path);
         String result = path_to_node(location.dir);
         if (location.name != '')
-            result += '/${location.name}';
+            result += '${location.name}';
         return result;
     }
 
     String path_to_node(Node node) {
-        String result = '';
-        if (identical(node, filesys.root))
-            return '/';
+        String result = node.type == NodeType.DIRECTORY ? '/' : '';
         while (!identical(node, filesys.root)) {
             result = '/${node.name}' + result;
             node = node.parent;
