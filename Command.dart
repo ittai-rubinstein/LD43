@@ -350,6 +350,50 @@ class Cp extends BaseCommand {
     }
 }
 
+List<String> _rm_impl(String path, Environment env) {
+    try {
+        if (env.is_link(path)) {
+            env.rm(path);
+            return [];
+        }
+    } on FileException catch (e) {
+        return ["no such file or directory $path"];
+    }
+    if(env.get_type(path) == NodeType.FILE) {
+        env.rm(path);
+        return [];
+    }
+    List<String> ret = [];
+    for(String child in get_absolute_children(path, env)) {
+        ret += _rm_impl(child, env);
+    }
+    try {
+        env.rmdir(path);
+    } on FileException catch(e) {
+        ret.add("cannot rmeove $path: unexpected error occured");
+    }
+    return ret;
+}
+
+class Rm extends BaseCommand {
+    Rm(List<String> arguments) : super(arguments, 'rm');
+
+    String apply(String stdin, Environment env) {
+        List<String> ret = [];
+        for(String path in arguments) {
+            ret += _rm_impl(path, env);
+        }
+        List<String> real_ret = [];
+        for(String error in ret) {
+            real_ret.add("rm: " + error);
+        }
+        if(real_ret.length == 0) {
+            return "";
+        }
+        return real_ret.join("\n") + "\n";
+    }
+}
+
 class EmptyCommand extends BaseCommand {
     EmptyCommand(List<String> arguments) : super(arguments, 'empty_command') {
         assert(arguments.length == 0);
@@ -377,6 +421,7 @@ BaseCommand command_name_and_arguments_to_command(String cmd_name, List<String> 
         case 'cd': return Cd(arguments); break;
         case 'find': return Find(arguments); break;
         case 'cp': return Cp(arguments); break;
+        case 'rm': return Rm(arguments); break;
         default: throw ParseException("No command named $cmd_name");
     }
 }
