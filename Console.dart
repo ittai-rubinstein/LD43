@@ -1,7 +1,8 @@
 import 'dart:html';
+import 'dart:math';
 // import 'dart:collection'; 
 
-const DEBUG_CONSOLE = true;
+const DEBUG_CONSOLE = false;
 
 class Console{
     // The command currently being parsed
@@ -57,10 +58,10 @@ class Console{
         canvas.height = canvas.clientHeight;
 
         // Initialize the printing head to the botoom of the screen. Later, this should be changed.
-        NewestLineYPos = GetMaxYPos();
+        NewestLineYPos = Y_MIN_POS;
 
         PrintAllTerminal();
-        print("Character width should be ${ctx.measureText("a").width}");
+        // print("Character width should be ${ctx.measureText("a").width}");
 
         // Junk. To be removed...
 
@@ -126,8 +127,8 @@ class Console{
     // Updates the XPosCurrPrint Accordingly
     void PrintStringToScreenSimple(String message){
         ctx.fillText(message, XPosCurrPrint, YPosCurrLine);
-        print(XPosCurrPrint);
-        print(ctx.measureText(message).width);
+        // print(XPosCurrPrint);
+        // print(ctx.measureText(message).width);
         XPosCurrPrint += ctx.measureText(message).width;
     }
 
@@ -229,6 +230,14 @@ class Console{
                 case 'Enter':
                 FinishReadingCommand();
                 break;
+                case 'ArrowDown':
+                NewestLineYPos = max(Y_MIN_POS, NewestLineYPos - LINE_HEIGHT / 4);
+                PrintAllTerminal();
+                break;
+                case 'ArrowUp':
+                NewestLineYPos = NewestLineYPos + (LINE_HEIGHT / 4);
+                PrintAllTerminal();
+                break;
                 default:
                 break;
             }
@@ -239,12 +248,19 @@ class Console{
     void FinishReadingCommand(){
         // Send the command to the Linux system (currently just prints to log)
         String result = SendCommand(current_command);
+        // Compute the number of lines for the current command and result
+        num NumLinesCurrPrint = NumLinesForString('$username@$machine_name:$current_address\$ $current_command') +
+                NumLinesForString(result);
         // Add the command, the answer, and the current address to the list of past commands (for console content)
         commands_and_outputs.add([current_address, current_command, result]);
         // clears the command
         current_command = "";
         // TODO: change this to get the current address from the Linux system.
         current_address = current_address;
+        // Lower us by however much the new prints take
+        NewestLineYPos += LINE_HEIGHT * NumLinesCurrPrint;
+        // Make sure we actually show the newest line:
+        NewestLineYPos = min(GetMaxYPos(), max(Y_MIN_POS, NewestLineYPos));
         PrintAllTerminal();
     }
 
@@ -257,10 +273,16 @@ class Console{
         PrintSingleCharToCommand(new_character);
     }
 
+    /**
+     * Adds a single character to the command currently being written on the console.
+     */
     void PrintSingleCharToCommand(String new_char){
-        if (GetMaxXPos() > XPosCurrPrint + CHARACTER_WIDTH) {
+        // Make sure that character is actually on screen.
+        
+        if ((GetMaxXPos() > XPosCurrPrint + CHARACTER_WIDTH) && (NewestLineYPos == min(GetMaxYPos(), max(Y_MIN_POS, NewestLineYPos)))) {
             PrintStringToScreenSimple(new_char);
         } else {
+            NewestLineYPos = min(GetMaxYPos(), max(Y_MIN_POS, NewestLineYPos));
             PrintAllTerminal();
         }
     }
