@@ -1,6 +1,7 @@
+import "Environment.dart";
 
 abstract class Command {
-    String apply(String stdin, FileSystem filesys);
+    String apply(String stdin, Environment filesys);
 }
 
 abstract class BaseCommand extends Command {
@@ -13,7 +14,7 @@ class CompoundCommand extends Command {
     Command a, b;
 
     CompoundCommand(this.a, this.b);
-    String apply(String stdin, FileSystem filesys) {
+    String apply(String stdin, Environment filesys) {
         String middle_string = a.apply(stdin, filesys);
         return b.apply(middle_string, filesys);
     }
@@ -22,7 +23,7 @@ class CompoundCommand extends Command {
 class Echo extends BaseCommand {
     Echo(List<String> arguments) : super(arguments);
 
-    String apply(String stdin, FileSystem filesys) {
+    String apply(String stdin, Environment filesys) {
         return arguments.join(" ");
     }
 }
@@ -30,7 +31,7 @@ class Echo extends BaseCommand {
 class Cat extends BaseCommand {
     Cat(List<String> arguments) : super(arguments);
 
-    String apply(String stdin, FileSystem filesys) {
+    String apply(String stdin, Environment filesys) {
         List<String> datas;
 //        arguments.forEach(() => ());
         for(String filename in arguments) {
