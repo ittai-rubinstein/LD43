@@ -95,9 +95,10 @@ class Environment {
 
     bool is_link(String path) {
         Node container = get_parent_dir(path);
-        if (!container.children.containsKey(filename(path)))
-            throw FileException();
-        return container.children[filename(path)].type == NodeType.LINK;
+        if ((filename(path) == '.') || (filename(path) == '..')) {
+            return false;
+        }
+        return container.get_child(filename(path)).type == NodeType.LINK;
     }
 
     List<String> get_children(String path) {
@@ -234,6 +235,14 @@ class Node {
     void set_child(Node file) {
         file.parent = this;
         children[file.name] = file;
+    }
+
+    Node get_child(String name) {
+        if (name == '')
+            return this;
+        if (!children.containsKey(name))
+            throw FileException();
+        return children[name];
     }
 }
 

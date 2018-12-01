@@ -215,6 +215,9 @@ class Find extends BaseCommand {
 }
 
 void _cp_impl(String from, String to, Environment env) {
+    if(env.absolute_path(from) == env.absolute_path(to)) {
+        throw LinuxException("can't cp: '$from' and '$to' are the same file");
+    }
     if(!env.exists(from)) {
         throw LinuxException("can't stat '$from': No such file or directory");
     }
@@ -370,7 +373,7 @@ List<String> _rm_impl(String path, Environment env) {
     try {
         env.rmdir(path);
     } on FileException catch(e) {
-        ret.add("cannot rmeove $path: unexpected error occured");
+        ret.add("cannot rmeove $path: parent of current directory");
     }
     return ret;
 }
