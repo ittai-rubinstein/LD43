@@ -1,5 +1,14 @@
 import "Environment.dart";
 
+List<String> get_absolute_children(String path, Environment env) {
+    return env.get_children(path).map((child) => (path + "/" + child)).toList();
+}
+
+class LinuxException implements Exception {
+    String cause;
+    LinuxException(this.cause);
+}
+
 abstract class Command {
     String apply(String stdin, Environment env);
 }
@@ -50,8 +59,8 @@ class Cat extends BaseCommand {
                 datas.add("cat: can't open '$filename': No such file or directory");
                 continue;
             }
-            if(env.get_type(filename) == NodeType.DIRECTORY) {
-                datas.add("cat: read error: Is a directory");
+            if(env.get_type(filename) != NodeType.FILE) {
+                datas.add("cat: read error: Is not a file");
                 continue;
             }
             datas.add(env.read_file(filename));
@@ -77,7 +86,7 @@ class Ls extends BaseCommand {
                 datas.add(filename);
             }
             else {
-                datas.add(env.get_children(filename).join(" "));
+                datas.add(get_absolute_children(filename, env).join(" "));
             }
         }
         String ret = datas.join("\n");
@@ -177,8 +186,11 @@ class Cd extends BaseCommand {
 
 List<String> _find_impl(String path, Environment env) {
     List<String> ret = [path];
+    if(env.is_link(path)) {
+        return ret;
+    }
     if(env.get_type(path) == NodeType.DIRECTORY) {
-        for (String child in env.get_children(path)) {
+        for (String child in get_absolute_children(path, env)) {
             ret += _find_impl(child, env);
         }
     }
@@ -202,6 +214,136 @@ class Find extends BaseCommand {
     }
 }
 
+void _cp_impl(String from, String to, Environment env) {
+    if(!env.exists(from)) {
+        throw LinuxException("can't stat '$from': No such file or directory");
+    }
+    if(env.get_type(from) != NodeType.FILE) {
+        throw LinuxException("can't copy '$from': Is a directory");
+    }
+    if(env.exists(to)) {
+        if(env.get_type(to) == NodeType.FILE) {
+            env.rm(to);
+        }
+        else {
+            String new_target = to + env.filename(from);
+            if(env.exists(new_target)) {
+                if(env.get_type(new_target) == NodeType.FILE) {
+                    env.rm(new_target);
+                }
+                else {
+                    throw LinuxException("can't create '$to': Already exists");
+                }
+            }
+            to = new_target;
+        }
+    }
+    try {
+        env.create_new_file(to, env.read_file(from));
+    } on FileException catch (e) {
+        throw LinuxException("$to: No such file or directory");
+    }
+}
+
+// Returns the list of errors
+List<String> _cpr_impl(String from, String to, Environment env) {
+    if(!env.exists(from)) {
+        return ["can't stat '$from': No such file or directory"];
+    }
+    if(env.get_type(from) != NodeType.DIRECTORY) {
+        throw Exception("Internal error!");
+    }
+    if(!env.exists(to)) {
+        try {
+            env.create_new_dir(to);
+        } on FileException catch(e) {
+            return ["can't stat '$to': No such file or directory"];
+        }
+    }
+    if(env.get_type(to) != NodeType.DIRECTORY) {
+        return ["target '$to' is not a directory"];
+    }
+    String real_target = to + env.filename(to);
+    if(!env.exists(real_target)) {
+        try {
+            env.create_new_dir(real_target);
+        } on FileException catch(e) {
+            return ["can't stat '$real_target': No such file or directory"];
+        }
+    }
+    List<String> ret = [];
+    for(String child in get_absolute_children(from, env)) {
+        if(env.is_link(child) || (env.get_type(child) == NodeType.FILE)) {
+            String new_target = real_target + env.filename(child);
+            try {
+                _cp_impl(child, new_target, env);
+            } on LinuxException catch(e) {
+                ret.add(e.cause);
+            }
+        }
+        else {
+            assert(env.get_type(child) == NodeType.DIRECTORY);
+            ret += _cpr_impl(child, real_target, env);
+        }
+    }
+    return ret;
+}
+
+List<String> _cp_united_impl(String from, String to, Environment env) {
+    if(!env.exists(from)) {
+        return ["can't stat '$from': No such file or directory"];
+    }
+    if(env.get_type(from) == NodeType.FILE) {
+        try {
+            _cp_impl(from, to, env);
+        } on LinuxException catch(e) {
+            return [e.cause];
+        }
+    }
+    List<String> errors = _cpr_impl(from, to, env);
+    return errors;
+}
+
+class Cp extends BaseCommand {
+    Cp(List<String> arguments) : super(arguments, 'cp');
+
+    String apply(String stdin, Environment env) {
+        if(arguments.length == 0) {
+            return "cp: no arguments given\n";
+        }
+        if(arguments.length == 1) {
+            return "cp: only one argument given\n";
+        }
+        if(arguments.length == 2) {
+            List<String> ret = _cp_united_impl(arguments[0], arguments[1], env);
+            if(ret.length == 0) {
+                return "";
+            }
+            return ret.join("\n") + "\n";
+        }
+        if(!env.exists(arguments.last)) {
+            String to = arguments.last;
+            return "cp: can't copy into '$to': No such file or directory\n";
+        }
+        if(env.get_type(arguments.last) == NodeType.FILE) {
+            String to = arguments.last;
+            return "cp: can't copy into '$to': Not a directory\n";
+        }
+        List<String> ret = [];
+        for(String from in arguments.sublist(0, arguments.length - 1)) {
+            ret += _cp_united_impl(from, arguments.last, env);
+        }
+        List<String> real_ret = [];
+        for(String error in ret) {
+            real_ret.add("cp: " + error);
+        }
+        if(real_ret.length == 0) {
+            return "";
+        }
+        return real_ret.join("\n") + "\n";
+    }
+}
+
 class EmptyCommand extends BaseCommand {
     EmptyCommand(List<String> arguments) : super(arguments, 'empty_command') {
         assert(arguments.length == 0);
@@ -212,7 +354,7 @@ class EmptyCommand extends BaseCommand {
     }
 }
 
-class ParseException implements Exception {
+class ParseException implements LinuxException {
     String cause;
     ParseException(this.cause);
 }
@@ -228,6 +370,7 @@ BaseCommand command_name_and_arguments_to_command(String cmd_name, List<String> 
         case 'pwd': return Pwd(arguments); break;
         case 'cd': return Cd(arguments); break;
         case 'find': return Find(arguments); break;
+        case 'cp': return Cp(arguments); break;
         default: throw ParseException("No command named $cmd_name");
     }
 }
@@ -245,7 +388,7 @@ Command parse_atomic_command(String cmd_text) {
 }
 
 Command parse_command(String cmd_text) {
-    const List<String> forbidden_characters = ["{", "}", "(", ")", "<", ">", '"', "'"];
+    const List<String> forbidden_characters = ["{", "}", "(", ")", "<", ">", '"', "'", "-"];
     for(var char in forbidden_characters) {
         if(cmd_text.contains(char)) {
             throw ParseException("Character '$char' not yet supported");
