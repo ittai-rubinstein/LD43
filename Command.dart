@@ -81,9 +81,8 @@ class Ls extends BaseCommand {
             }
         }
         String ret = datas.join("\n");
-        if(ret.length == 0) {
+        if(ret.length == 0)
             return "";
-        }
         return ret + "\n";
     }
 }
@@ -104,9 +103,8 @@ class Touch extends BaseCommand {
             }
         }
         String ret = datas.join("\n");
-        if(ret.length == 0) {
+        if(ret.length == 0)
             return "";
-        }
         return ret + "\n";
     }
 }
@@ -131,9 +129,8 @@ class Mkdir extends BaseCommand {
             }
         }
         String ret = datas.join("\n");
-        if(ret.length == 0) {
+        if(ret.length == 0)
             return "";
-        }
         return ret + "\n";
     }
 }
@@ -178,6 +175,33 @@ class Cd extends BaseCommand {
     }
 }
 
+List<String> _find_impl(String path, Environment env) {
+    List<String> ret = [path];
+    if(env.get_type(path) == NodeType.DIRECTORY) {
+        for (String child in env.get_children(path)) {
+            ret += _find_impl(child, env);
+        }
+    }
+    return ret;
+}
+
+class Find extends BaseCommand {
+    Find(List<String> arguments) : super(arguments, 'find');
+
+    String apply(String stdin, Environment env) {
+        if(arguments.length == 0) {
+            arguments.add('.');
+        }
+        List<String> ret = [];
+        for(String path in arguments) {
+            ret += _find_impl(path, env);
+        }
+        if(ret.length == 0)
+            return "";
+        return ret.join("\n") + "\n";
+    }
+}
+
 class EmptyCommand extends BaseCommand {
     EmptyCommand(List<String> arguments) : super(arguments, 'empty_command') {
         assert(arguments.length == 0);
@@ -203,6 +227,7 @@ BaseCommand command_name_and_arguments_to_command(String cmd_name, List<String> 
         case 'mkdir': return Mkdir(arguments); break;
         case 'pwd': return Pwd(arguments); break;
         case 'cd': return Cd(arguments); break;
+        case 'find': return Find(arguments); break;
         default: throw ParseException("No command named $cmd_name");
     }
 }
