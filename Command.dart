@@ -62,6 +62,9 @@ class Ls extends BaseCommand {
 
     String apply(String stdin, Environment env) {
         List<String> datas = [];
+        if(arguments.length == 0) {
+            arguments.add('.');
+        }
         for(String filename in arguments) {
             if(!env.exists(filename)) {
                 datas.add("ls: $filename: No such file or directory");
@@ -102,6 +105,9 @@ class Mkdir extends BaseCommand {
 
     String apply(String stdin, Environment env) {
         List<String> datas = [];
+        if(arguments.length == 0) {
+            return "mkdir: no arguments given";
+        }
         for(String path in arguments) {
             if(env.exists(path)) {
                 datas.add("mkdir: can't create directory '$path': File exists");
@@ -114,6 +120,14 @@ class Mkdir extends BaseCommand {
             }
         }
         return datas.join("\n");
+    }
+}
+
+class Pwd extends BaseCommand {
+    Pwd(List<String> arguments) : super(arguments, 'pwd');
+
+    String apply(String stdin, Environment env) {
+        return env.pwd();
     }
 }
 
@@ -153,6 +167,7 @@ BaseCommand command_name_and_arguments_to_command(String cmd_name, List<String> 
         case 'touch': return Touch(arguments); break;
         case 'xargs': return Xargs(arguments); break;
         case 'mkdir': return Mkdir(arguments); break;
+        case 'pwd': return Pwd(arguments); break;
         default: throw ParseException("No command named $cmd_name");
     }
 }
