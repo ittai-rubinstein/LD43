@@ -131,6 +131,10 @@ class Environment {
     String pwd() {
         return path_to_node(curDir);
     }
+
+    void cd(String path) {
+        curDir = node_at(path);
+    }
 }
 
 enum NodeType {
