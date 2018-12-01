@@ -14,3 +14,7 @@ doc/api/
 
 # Remove the idea folder
 .idea/
+
+# Remove Visual Studio Code's folder
+.vscode/
+
