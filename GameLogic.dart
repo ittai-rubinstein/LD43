@@ -5,11 +5,8 @@ import 'Console.dart';
 
 class GameLogic {
     static Environment env;
-<<<<<<< HEAD
     static List<String> removed_commands;
-=======
     static Console console;
->>>>>>> ittai
 
     static SwapLevel level;
     static void reset() {
