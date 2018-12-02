@@ -4,7 +4,7 @@ import 'GameLogic.dart';
 import 'TextOnCanvas.dart';
 // import 'dart:collection'; 
 
-const DEBUG_CONSOLE = false;
+const DEBUG_CONSOLE = true;
 
 class Console{
     // The command currently being parsed
@@ -141,10 +141,32 @@ class Console{
                 toc.NewestLineYPos = toc.NewestLineYPos + (TextOnCanvas.LINE_HEIGHT / 4);
                 PrintAllTerminal();
                 break;
+                case 'Backspace':
+                RemoveCharFromCurrCommand();
+                break;
                 default:
                 break;
             }
         }
+    }
+
+
+    /**
+     * Removes the last character from the line being processed (a backspace).
+     * If no such character exists, does nothing. TODO make it beep on illegal backspace.
+     */
+    void RemoveCharFromCurrCommand(){
+        // If is illegal backspace
+        if (current_command.length == 0) {
+            if (DEBUG_CONSOLE) {
+                print("Illegal Backspace");
+            }
+            return;
+        }
+        // Erase last character
+        current_command = current_command.substring(0, current_command.length-1);
+        // Reprint whole screen
+        PrintAllTerminal();
     }
 
     // Called when we are done reading a command from the user (i.e. when the enter key has been pressed).

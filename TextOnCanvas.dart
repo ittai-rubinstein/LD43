@@ -1,7 +1,7 @@
 import 'dart:html';
 import 'dart:math';
 
-const bool DEBUG_TOC = true;
+const bool DEBUG_TOC = false;
 
 class TextOnCanvas {
     // The canvas on which we will be drawing the text
