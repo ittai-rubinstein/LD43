@@ -88,14 +88,14 @@ class GameLogic {
     }
 
     static on_level_complete() async {
-        await Future.delayed(Duration(seconds: 2));
+        await Future.delayed(Duration(seconds: 1));
         start_sacrifice();
         
     }
 
     static on_no_commands_left() async {
         // TODO: block input
-        await Future.delayed(Duration(seconds: 2));
+        await Future.delayed(Duration(seconds: 1));
         // TODO: allow input
         start_level();
     }
