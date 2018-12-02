@@ -247,8 +247,12 @@ class Cd extends BaseCommand {
 
 List<String> _find_impl(String path, Environment env) {
     List<String> ret = [env.trim_trailing_slash(path)];
-    if(env.is_link(path)) {
-        return ret;
+    try {
+        if(env.is_link(path)) {
+            return ret;
+        }
+    } on FileException {
+        return ["find: $path: No such file or directory"];
     }
     if(env.get_type(path) == NodeType.DIRECTORY) {
         for (String child in get_relative_children(path, env)) {

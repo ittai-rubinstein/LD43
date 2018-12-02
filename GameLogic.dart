@@ -8,7 +8,7 @@ import 'WelcomeBanner.dart';
 
 class GameLogic {
     static Environment env;
-    static List<String> removed_commands;
+    static List<String> removed_commands = [];
     static List<Level> levels_done;
     static Console con;
     static List<String> choice_options;

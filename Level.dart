@@ -121,7 +121,10 @@ class RemoveAllButLevel implements Level {
 class MoveDirectoryLevel implements Level {
     String description = "TODO";
 
-    List<List<String>> solutions = [[]];
+    List<List<String>> solutions = [
+        ["mv bad good"],
+        ["mkdir good", "find bad"]
+    ];
 
     int BASE_EMOJI = 0x1f550;
 
