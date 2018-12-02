@@ -5,9 +5,10 @@ import 'GameLogic.dart';
 import 'TextOnCanvas.dart';
 // import 'dart:collection';
 
-const DEBUG_CONSOLE = false;
+const DEBUG_CONSOLE = true;
 
 class Console{
+    
     // The command currently being parsed
     String current_command = "";
     // Our current path (for the print beside the line currently being parsed)
@@ -22,6 +23,9 @@ class Console{
     TextOnCanvas toc = new TextOnCanvas("Console");
 
     Console(){
+        if (DEBUG_CONSOLE) {
+            print("Building console");
+        }
         // Set up a handler that will redraw the contents of the window on resize.
         window.onResize.listen(this.ResizeHandler);
 
