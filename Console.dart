@@ -21,6 +21,9 @@ class Console{
     TextOnCanvas toc = new TextOnCanvas("Console");
 
     Console(){
+
+        // Set up the handler that will redraw the contents of the window on resize.      
+        window.onResize.listen(this.ResizeHandler);
         
         // Set the keyboard handler to listen to keystrokes:
         window.onKeyDown.listen(this.KeyboardHandler);
@@ -114,6 +117,10 @@ class Console{
         String CommandPrint = GetUserMachine() + ":" + current_address + "\$ " + current_command;
         num_lines += toc.NumLinesForString(CommandPrint);
         return num_lines;
+    }
+
+    void ResizeHandler(Event e) {
+        this.PrintAllTerminal();
     }
 
     // Handles the Keyboard interrupts.
