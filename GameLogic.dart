@@ -8,6 +8,8 @@ class GameLogic {
     static Environment env;
     static List<String> removed_commands;
     static Console con;
+    // The number of commands left for the current level
+    static num commands_left = 0;
 
     static SwapLevel level;
     static void reset() {
@@ -18,6 +20,8 @@ class GameLogic {
     }
 
     static void start_level() {
+        // Initiailize to 5 commands per level.
+        commands_left = 5;
         env = level.setup();
         FileView.OnNewCommand();
         if (con != null) {
@@ -36,6 +40,12 @@ class GameLogic {
     }
 
     static String run_command(String cmd) {
+        // Remove one command from allowance
+        commands_left--;
+        // If we are out of commands, show the user a meaningful message, and restart the level.
+        if (commands_left == 0) {
+            // TODO: do this.
+        }
         try {
             Command command = parse_command(cmd);
             String cmd_output = command.apply("", env);
