@@ -60,6 +60,9 @@ class SwapLevel extends Level{
         ["cat sun | tee sun2",
         "cat moon | tee sun",
         "cat sun2 | tee moon"],
+        ["cat sun > bla",
+        "cat moon > sun",
+        "cat bla > moon"],
         ["mv sun bla",
         "mv moon sun",
         "mv bla moon"]
@@ -111,7 +114,8 @@ class FileContentLevel extends Level{
 }
 
 class RemoveAllButLevel extends Level {
-    String description = "Remove the directories d1 - d9, while maitaining"
+    List<String> dirnames = ["\u{2660}","\u{2663}","\u{2665}","\u{2666}"];
+    String description = "Remove the directories d\u{2660} - d\u{2666}, while maitaining"
                         " a direcory called 'innocent'. We don't care about"
                         " the contents of the directories";
 
@@ -126,23 +130,23 @@ class RemoveAllButLevel extends Level {
 
     Environment setup() {
         Environment env = Environment();
-        for (int i = 1;i < 10;i++)
-            env.create_new_dir("/d$i");
+        for (int i = 0;i < 4;i++)
+            env.create_new_dir("/d"+dirnames[i]);
         env.create_new_dir("innocent");
         return env;
     }
 
     bool is_solved(Environment env) {
         bool is_link;
-        for (int i = 1;i < 10;i++) {
+        for (int i = 0;i < 4;i++) {
             try {
-                is_link = env.is_link("/d$i");
+                is_link = env.is_link("/d"+dirnames[i]);
             } on FileException {
                 continue;  // nonexistent
             }
             if (is_link)
                 continue;
-            if (env.get_type("/d$i") == NodeType.DIRECTORY)
+            if (env.get_type("/d"+dirnames[i]) == NodeType.DIRECTORY)
                 return false;  // should have been removed
         }
         try {
@@ -161,7 +165,8 @@ class MoveDirectoryLevel extends Level {
                          " from /bad";
 
     List<List<String>> solutions = [
-        ["mv bad good"]
+        ["mv bad good"],
+        ["cp bad good"]
     ];
 
     int BASE_EMOJI = 0x1f550;
