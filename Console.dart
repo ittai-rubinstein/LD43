@@ -127,6 +127,7 @@ class Console{
         // If the length of event.key is 1, then the event is a character to be added:
         if (event.key.length == 1) {
             AddCharToConsole(event.key);
+            event.preventDefault();
         } else {
             // Deal with all other cases:
             switch(event.key){
