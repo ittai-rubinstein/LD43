@@ -1,10 +1,16 @@
 import 'TextOnCanvas.dart';
 import 'GameLogic.dart';
 import 'Environment.dart';
+import 'dart:html';
 
 class FileView {
     // The text drawer
     static TextOnCanvas toc = new TextOnCanvas("FileView");
+
+    // // The canvas on which we will be drawing the text
+    // static CanvasElement canvas = querySelector('#$canvas_name');
+    // // The 2d drawing context
+    // static CanvasRenderingContext2D ctx = canvas.getContext('2d');
 
     static const DIR_COLOR = "Blue";
     static const FILE_COLOR = "Green";
@@ -108,6 +114,12 @@ class FileView {
         }
         toc.GoToNewLine();
         DrawFileViewFromDir("/", LEVEL_SPACER);
+
+        // Print the countdown
+        toc.XPosCurrPrint = toc.GetMaxXPos() - toc.ctx.measureText("Countdown: ${GameLogic.commands_left}").width;
+        toc.YPosCurrLine = TextOnCanvas.Y_MIN_POS;
+        toc.setFillStyle("Red");
+        toc.PrintStringToScreenSimple("Countdown: ${GameLogic.commands_left}");
     }
 
 

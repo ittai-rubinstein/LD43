@@ -3,11 +3,15 @@ import 'Command.dart';
 
 abstract class Level {
     List<List<String>> solutions;
+    String description;
     Environment setup();
     bool is_solved(Environment env);
 }
 
 class SwapLevel implements Level{
+    String description = "Swap the contents of the two files: Put the contents of 'moon'"
+                         " in a file named 'sun' and vice versa.";
+
     static const String SUN = "\u{1f31e}";
     static const String MOON = "\u{1f31a}";
 
@@ -17,7 +21,10 @@ class SwapLevel implements Level{
         "cp sun2 moon"],
         ["cat sun | tee sun2",
         "cat moon | tee sun",
-        "cat sun2 | tee moon"]
+        "cat sun2 | tee moon"],
+        ["mv sun bla",
+        "mv moon sun",
+        "mv bla moon"]
     ];
 
     // Swap two files
@@ -44,6 +51,8 @@ class SwapLevel implements Level{
 }
 
 class FileContentLevel implements Level{
+    String description = "Create a file named 'hello' with the word 'world' in it.";
+
     List<List<String>> solutions = [
         ["echo world > hello"],
         ["echo world | tee hello"]];

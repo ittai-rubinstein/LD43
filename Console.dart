@@ -5,7 +5,7 @@ import 'GameLogic.dart';
 import 'TextOnCanvas.dart';
 // import 'dart:collection';
 
-const DEBUG_CONSOLE = true;
+const DEBUG_CONSOLE = false;
 
 class Console{
     
@@ -243,7 +243,7 @@ class Console{
     }
 
     String SendCommand(String command) {
-        String cmd_output = GameLogic.run_command(command);
+        String cmd_output = GameLogic.on_input(command);
         return cmd_output;
     }
     // A method that handles the printing of all the console to the string
