@@ -3,5 +3,5 @@ import 'GameLogic.dart';
 
 void main() {
     GameLogic.reset();
-    var c = Console();
+    // var c = Console();
 }
