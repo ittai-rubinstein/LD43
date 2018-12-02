@@ -3,6 +3,7 @@ import 'Level.dart';
 import 'Command.dart';
 import 'Console.dart';
 import 'FileView.dart';
+import 'MissionControl.dart';
 
 class GameLogic {
     static Environment env;
@@ -24,7 +25,8 @@ class GameLogic {
 
     static void start_level() {
         env = current_level.setup();
-        print("${current_level.description}");
+        MissionControl.UpdateMission(current_level.description);
+
         
         // Initiailize to 5 commands per level.
         commands_left = 5;

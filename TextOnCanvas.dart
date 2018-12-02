@@ -1,7 +1,7 @@
 import 'dart:html';
 import 'dart:math';
 
-const bool DEBUG_TOC = true;
+const bool DEBUG_TOC = false;
 
 class TextOnCanvas {
     // The canvas on which we will be drawing the text
@@ -9,8 +9,10 @@ class TextOnCanvas {
     // The 2d drawing context
     CanvasRenderingContext2D ctx;
 
+    String Title;
+
     // The highest point visible in the screen:
-    static const num Y_MIN_POS = 20;
+    static const num Y_MIN_POS = 70;
     // The leftmost point visible in the screen:
     static const int X_MIN_POS = 7;
     // The converse values depend upon the window size (which may be dynamic?)
@@ -18,10 +20,10 @@ class TextOnCanvas {
         return canvas.height - Y_MIN_POS;
     }
     num GetMaxXPos(){
-        return canvas.width - X_MIN_POS;
+        return canvas.width - X_MIN_POS - 2;
     }
     // How far down we need to jump between lines:
-    static const int LINE_HEIGHT = Y_MIN_POS;
+    static const int LINE_HEIGHT = 20;
 
     // The position of the current line being edited. These values will be updated as the prints goes on.
     num YPosCurrLine = Y_MIN_POS;
@@ -33,11 +35,14 @@ class TextOnCanvas {
     // The width of a character. Measured in a horani manner.
     static const num CHARACTER_WIDTH = 10.8369140625;
 
-    TextOnCanvas(String canvas_name){
+    TextOnCanvas(String canvas_name, String title){
         // Ask the html for the canvas of the console, on which we will print everything:
         canvas = querySelector('#$canvas_name');
         // Generate a 2d drawing context:
         ctx = canvas.getContext('2d');
+
+        // Save Title for printing.
+        Title = title;
 
         // Debug prints
         if (DEBUG_TOC) {
@@ -52,6 +57,15 @@ class TextOnCanvas {
 
         // Initialize the printing head to the botoom of the screen. Later, this should be changed.
         NewestLineYPos = Y_MIN_POS;
+    }
+
+    void PrintTitle(){
+        // Set print parameters
+        ctx.font = "28px Monospace";
+        ctx.fillStyle = "Grey";
+        // Compute the width of the title
+        num TitleWidth = ctx.measureText(Title).width;
+        ctx.fillText(Title, (canvas.width - TitleWidth) / 2, 40);
     }
 
 
@@ -86,6 +100,8 @@ class TextOnCanvas {
         canvas.height = canvas.clientHeight;
         // Clear the screen
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // Print the title
+        PrintTitle();
         // Set the font and color
         setFillStyle(fillStyle);
         ctx.font = "18px monospace";
@@ -95,29 +111,24 @@ class TextOnCanvas {
      * Prints a String to the console, separating it into several lines as necessary.
      */
     void PrintStringToScreenMultipleLines(String message){
-        // While we still have data to print:
-        while (message.isNotEmpty) {
-            // Check how many charcters can be printed on the current line.
-            // If it contains no \n chars, then it is determined by the width of the screen.
-            // If it does contain a \n char, then it is determined by the first of the two.
-            num max_chars_curr_line = min(((GetMaxXPos() - XPosCurrPrint) / CHARACTER_WIDTH).floor(), 
-                                            ((message.indexOf("\n") < 0)?(1000000):(message.indexOf("\n") + 1)));
-            // If all the data fits in one line, we print it, and don't go to a new line
-            if (message.length <= max_chars_curr_line) {
-                if (DEBUG_TOC) {
-                    print('Printing $message to single line.');
+        while (message.endsWith("\n")) {
+            message = message.substring(0, message.length-1);
+        }
+        for (var i = 0; i < message.length; i++) {
+            var current_character = message[i];
+            if (current_character == "\n") {
+                XPosCurrPrint = X_MIN_POS;
+                YPosCurrLine += LINE_HEIGHT;
+            } else{
+                if (XPosCurrPrint + CHARACTER_WIDTH <= GetMaxXPos()) {
+                    ctx.fillText(current_character, XPosCurrPrint, YPosCurrLine);
+                    XPosCurrPrint += CHARACTER_WIDTH;
+                } else{
+                    YPosCurrLine += LINE_HEIGHT;
+                    XPosCurrPrint = X_MIN_POS;
+                    ctx.fillText(current_character, XPosCurrPrint, YPosCurrLine);
+                    XPosCurrPrint += CHARACTER_WIDTH;
                 }
-                PrintStringToScreenSimple(message);
-                break;
-            // Otherwise, we print what we can to this line, then jump to the next line, and remove what needs to be removed
-            // from the data to be printed.
-            } else {
-                if (DEBUG_TOC) {
-                    print('Printing ${message.substring(0,max_chars_curr_line)} to single line.');
-                }
-                PrintStringToScreenSimple(message.substring(0,max_chars_curr_line));
-                GoToNewLine();
-                message = message.substring(max_chars_curr_line);
             }
         }
     }
@@ -140,6 +151,33 @@ class TextOnCanvas {
 
     // Computes the number of lines necessary for writing a string
     int NumLinesForString(String message){
-        return (message.length.toDouble() / NumCharactersPerLine()).ceil();
+        if (message == "") {
+            return 0;
+        }
+        while (message.endsWith("\n")) {
+            message = message.substring(0, message.length-1);
+        }
+        int result = 1;
+        num temp_x = X_MIN_POS;
+        for (var i = 0; i < message.length; i++) {
+            var c = message[i];
+            if (c == "\n") {
+                temp_x = X_MIN_POS;
+                result += 1;
+            } else{
+                if (temp_x + CHARACTER_WIDTH <= GetMaxXPos()) {
+                    temp_x += CHARACTER_WIDTH;
+                } else{
+                    temp_x = X_MIN_POS + CHARACTER_WIDTH;
+                    result += 1;
+                }
+            }
+        }
+        if (DEBUG_TOC) {
+            print("Estimate that it will take $result lines to print ${message}");
+            print("${message.length - message.replaceAll("\n", "").length}");
+        }
+        // return (message.length.toDouble() / NumCharactersPerLine()).ceil();
+        return result;
     }
 }

@@ -1,6 +1,16 @@
 import "Environment.dart";
 import 'GameLogic.dart';
 
+
+class ManPage {
+    String cmd;
+    String synopsis;
+    List<String> usages;
+    List<String> description;
+
+    ManPage(this.cmd, this.synopsis, this.usages, this.description);
+}
+
 List<String> get_absolute_children(String path, Environment env) {
     return env.get_children(path).map((child) => env.absolute_path(path + "/" + child)).toList();
 }
@@ -35,7 +45,7 @@ abstract class BaseCommand extends Command {
         return "$cmd_name(" + arguments.join(", ") + ")";
     }
 
-    String getHelp();
+    ManPage getHelp();
 }
 
 // Pipe command A into command B
@@ -80,7 +90,7 @@ class Echo extends BaseCommand {
         return arguments.join(" ") + "\n";
     }
 
-    String getHelp() => "ECHO(1)        User Commands        ECHO(1)\n\nNAME\n       echo - display a line of text\n\nSYNOPSIS\n       echo [STRING]...\n\nDESCRIPTION\n       Echo the STRING(s) to standard output.";
+    ManPage getHelp() => ManPage("echo", "displays a line of text", ["echo [STRING]..."], ["Echo the STRING(s) to standard output."]);
 }
 
 class Cat extends BaseCommand {
@@ -105,7 +115,7 @@ class Cat extends BaseCommand {
         return datas.join("\n") + "\n";
     }
 
-    String getHelp() => "Banana";
+    ManPage getHelp() => ManPage("cat", "concatenate files and print on the standard output", ["cat [FILE]..."], ["Concatenate FILE(s) to standard output."]);
 }
 
 class Ls extends BaseCommand {
@@ -134,7 +144,7 @@ class Ls extends BaseCommand {
         return ret + "\n";
     }
 
-    String getHelp() => "Banana";
+    ManPage getHelp() => ManPage("ls", "list directory contents", ["ls [FILE]..."], ["List information about the FILEs (the current directory by", "default)."]);
 }
 
 class Touch extends BaseCommand {
@@ -158,7 +168,7 @@ class Touch extends BaseCommand {
         return ret + "\n";
     }
 
-    String getHelp() => "Banana";
+    ManPage getHelp() => ManPage("touch", "change file timestamps", ["touch FILE..."], ["Update the access and modification times of each FILE to the", "current time.", "", "A FILE argument that does not exist is created empty."]);
 }
 
 class Mkdir extends BaseCommand {
@@ -186,7 +196,7 @@ class Mkdir extends BaseCommand {
         return ret + "\n";
     }
 
-    String getHelp() => "Banana";
+    ManPage getHelp() => ManPage("mkdir", "make directories", ["mkdir DIRECTORY..."], ["Create the DIRECTORY(ies), if they do not already exist."]);
 }
 
 class Xargs extends BaseCommand {
@@ -201,7 +211,7 @@ class Xargs extends BaseCommand {
         return cmd_to_run.execute("", env);
     }
 
-    String getHelp() => "Banana";
+    ManPage getHelp() => ManPage("xargs", "build and execute command lines from standard input", ["xargs [command [initial-arguments]]"], ["xargs reads items from the standard input, delimited  by", "blanks or newlines, and executes the command (default is", "/bin/echo)  one or more times with any initial-arguments."]);
 }
 
 class Pwd extends BaseCommand {
@@ -211,7 +221,7 @@ class Pwd extends BaseCommand {
         return env.pwd() + "\n";
     }
 
-    String getHelp() => "Banana";
+    ManPage getHelp() => ManPage("pwd", "print name of current/working directory", ["pwd"], ["Print the full filename of the current working directory."]);
 }
 
 class Cd extends BaseCommand {
@@ -232,7 +242,7 @@ class Cd extends BaseCommand {
         return "";
     }
     
-    String getHelp() => "Banana";
+    ManPage getHelp() => ManPage("cd", "change directory", ["cd [DIRECTORY]"], ["Changes the current directory to [DIRECTORY]. The path", "given may be relative or absolute."]);
 }
 
 List<String> _find_impl(String path, Environment env) {
@@ -264,7 +274,7 @@ class Find extends BaseCommand {
         return ret.join("\n") + "\n";
     }
 
-    String getHelp() => "Banana";
+    ManPage getHelp() => ManPage("cat", "", [], [""]);
 }
 
 class Tee extends BaseCommand {
@@ -287,7 +297,7 @@ class Tee extends BaseCommand {
         return stdin;
     }
 
-    String getHelp() => "Banana";
+    ManPage getHelp() => ManPage("tee", "read from standard input and write to standard output and files", ["tee [FILE]..."], ["Copy standard input to each FILE, and also to  standard  out-", "put."]);
 }
 
 void _cp_impl(String from, String to, Environment env) {
@@ -430,7 +440,7 @@ class Cp extends BaseCommand {
         return real_ret.join("\n") + "\n";
     }
 
-    String getHelp() => "Banana";
+    ManPage getHelp() => ManPage("cp", "copy files and directories", ["cp SOURCE DEST", "cp SOURCE... DIRECTORY"], ["Copy SOURCE to DEST, or multiple SOURCE(s) to DIRECTORY."]);
 }
 
 List<String> _rm_impl(String path, Environment env) {
@@ -476,7 +486,7 @@ class Rm extends BaseCommand {
         return real_ret.join("\n") + "\n";
     }
 
-    String getHelp() => "Banana";
+    ManPage getHelp() => ManPage("rm", "remove files or directories", ["rm [FILE]..."], ["rm removes each specified file or directory."]);
 }
 
 class Rmdir extends BaseCommand {
@@ -503,7 +513,7 @@ class Rmdir extends BaseCommand {
         return result.join("\n");
     }
 
-    String getHelp() => "Banana";
+    ManPage getHelp() => ManPage("rmdir", "remove empty directories", ["rmdir DIRECTORY..."], ["Remove the DIRECTORY(ies), if they are empty."]);
 }
 
 List<String> _mv_impl(String from, String to, Environment env) {
@@ -554,7 +564,7 @@ class Mv extends BaseCommand {
         return real_ret.join("\n") + "\n";
     }
 
-    String getHelp() => "Banana";
+    ManPage getHelp() => ManPage("mv", "move (rename) files", ["mv SOURCE... DIRECTORY"], ["Rename SOURCE to DEST, or move SOURCE(s) to DIRECTORY."]);
 }
 
 class Man extends BaseCommand {
@@ -569,13 +579,23 @@ class Man extends BaseCommand {
         var cmd_name = arguments[0];
         try {
             var cmd = command_name_and_arguments_to_command(cmd_name, List<String> ());
-            return cmd.getHelp();
+            var page = cmd.getHelp();
+            var upperCmd = page.cmd.toUpperCase();
+            var usages = page.usages.map((s) => '       ' + s).join('\n');
+            var desc = page.description.map((s) => '       ' + s).join('\n');
+            return "${upperCmd}(1)        User Commands        ${upperCmd}(1)\n\n"
+                 + "NAME\n"
+                 + "       ${page.cmd} - ${page.synopsis}\n\n"
+                 + "SYNOPSIS\n"
+                 + usages + "\n\n"
+                 + "DESCRIPTION\n"
+                 + desc + "\n";
         } catch (ParseException) {
             return "No manual entry for ${cmd_name}"; 
         }
     }
 
-    String getHelp() => "Are you serious?";
+    ManPage getHelp() => ManPage("man", "help ambassador", ["man [COMMAND]"], ["Requests help from the benevolent help ambassador."]);
 }
 
 class EmptyCommand extends BaseCommand {
@@ -587,7 +607,7 @@ class EmptyCommand extends BaseCommand {
         return stdin;
     }
 
-    String getHelp() => "Banana";
+    ManPage getHelp() => ManPage("cat", "", [], [""]);
 }
 
 class ParseException implements LinuxException {

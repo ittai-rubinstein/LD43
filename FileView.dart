@@ -5,7 +5,7 @@ import 'dart:html';
 
 class FileView {
     // The text drawer
-    static TextOnCanvas toc = new TextOnCanvas("FileView");
+    static TextOnCanvas toc = new TextOnCanvas("FileView", "FileTree");
 
     // // The canvas on which we will be drawing the text
     // static CanvasElement canvas = querySelector('#$canvas_name');
