@@ -140,8 +140,13 @@ class Console{
         ctx.font = "18px monospace";
         // While we still have data to print:
         while (message.isNotEmpty) {
+            // Check how many charcters can be printed on the current line.
+            // If it contains no \n chars, then it is determined by the width of the screen.
+            // If it does contain a \n char, then it is determined by the first of the two.
+            num max_chars_curr_line = min(((GetMaxXPos() - XPosCurrPrint) / CHARACTER_WIDTH).floor(), 
+                                            ((message.indexOf("\n") <= 0)?(1000000):(message.indexOf("\n") + 1)));
             // If all the data fits in one line, we print it, and don't go to a new line
-            if ((XPosCurrPrint + (CHARACTER_WIDTH * message.length)) < GetMaxXPos()) {
+            if (message.length <= max_chars_curr_line) {
                 if (DEBUG_CONSOLE) {
                     print('Printing $message to single line.');
                 }
@@ -151,11 +156,11 @@ class Console{
             // from the data to be printed.
             } else {
                 if (DEBUG_CONSOLE) {
-                    print('Printing ${message.substring(0,((GetMaxXPos() - XPosCurrPrint) / CHARACTER_WIDTH).floor())} to single line.');
+                    print('Printing ${message.substring(0,max_chars_curr_line)} to single line.');
                 }
-                 PrintStringToScreenSimple(message.substring(0,((GetMaxXPos() - XPosCurrPrint) / CHARACTER_WIDTH).floor()));
+                PrintStringToScreenSimple(message.substring(0,max_chars_curr_line));
                 GoToNewLine();
-                message = message.substring(((GetMaxXPos() - XPosCurrPrint) / CHARACTER_WIDTH).floor());
+                message = message.substring(max_chars_curr_line);
             }
         }
     }
@@ -291,7 +296,7 @@ class Console{
         if (DEBUG_CONSOLE) {
             print('Send command $command');
         }
-        return "Answer($command)";
+        return "Answer of \n$command";
     }
     // A method that handles the printing of all the console to the string
     void PrintEntireConsoleToScreen(){
