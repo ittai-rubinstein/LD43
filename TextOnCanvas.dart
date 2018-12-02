@@ -95,29 +95,49 @@ class TextOnCanvas {
      * Prints a String to the console, separating it into several lines as necessary.
      */
     void PrintStringToScreenMultipleLines(String message){
-        // While we still have data to print:
-        while (message.isNotEmpty) {
-            // Check how many charcters can be printed on the current line.
-            // If it contains no \n chars, then it is determined by the width of the screen.
-            // If it does contain a \n char, then it is determined by the first of the two.
-            num max_chars_curr_line = min(((GetMaxXPos() - XPosCurrPrint) / CHARACTER_WIDTH).floor(), 
-                                            ((message.indexOf("\n") < 0)?(1000000):(message.indexOf("\n") + 1)));
-            // If all the data fits in one line, we print it, and don't go to a new line
-            if (message.length <= max_chars_curr_line) {
-                if (DEBUG_TOC) {
-                    print('Printing $message to single line.');
+        // // While we still have data to print:
+        // while (message.isNotEmpty) {
+        //     // Check how many charcters can be printed on the current line.
+        //     // If it contains no \n chars, then it is determined by the width of the screen.
+        //     // If it does contain a \n char, then it is determined by the first of the two.
+        //     num max_chars_curr_line = min(((GetMaxXPos() - XPosCurrPrint) / CHARACTER_WIDTH).floor(), 
+        //                                     ((message.indexOf("\n") < 0)?(1000000):(message.indexOf("\n") + 1)));
+        //     // If all the data fits in one line, we print it, and don't go to a new line
+        //     if (message.length <= max_chars_curr_line) {
+        //         if (DEBUG_TOC) {
+        //             print('Printing $message to single line.');
+        //         }
+        //         PrintStringToScreenSimple(message);
+        //         break;
+        //     // Otherwise, we print what we can to this line, then jump to the next line, and remove what needs to be removed
+        //     // from the data to be printed.
+        //     } else {
+        //         if (DEBUG_TOC) {
+        //             print('Printing ${message.substring(0,max_chars_curr_line)} to single line.');
+        //         }
+        //         PrintStringToScreenSimple(message.substring(0,max_chars_curr_line));
+        //         GoToNewLine();
+        //         message = message.substring(max_chars_curr_line);
+        //     }
+        // }
+        while (message.endsWith("\n")) {
+            message = message.substring(0, message.length-1);
+        }
+        for (var i = 0; i < message.length; i++) {
+            var current_character = message[i];
+            if (current_character == "\n") {
+                XPosCurrPrint = X_MIN_POS;
+                YPosCurrLine += LINE_HEIGHT;
+            } else{
+                if (XPosCurrPrint + CHARACTER_WIDTH <= GetMaxXPos()) {
+                    ctx.fillText(current_character, XPosCurrPrint, YPosCurrLine);
+                    XPosCurrPrint += CHARACTER_WIDTH;
+                } else{
+                    YPosCurrLine += LINE_HEIGHT;
+                    XPosCurrPrint = X_MIN_POS;
+                    ctx.fillText(current_character, XPosCurrPrint, YPosCurrLine);
+                    XPosCurrPrint += CHARACTER_WIDTH;
                 }
-                PrintStringToScreenSimple(message);
-                break;
-            // Otherwise, we print what we can to this line, then jump to the next line, and remove what needs to be removed
-            // from the data to be printed.
-            } else {
-                if (DEBUG_TOC) {
-                    print('Printing ${message.substring(0,max_chars_curr_line)} to single line.');
-                }
-                PrintStringToScreenSimple(message.substring(0,max_chars_curr_line));
-                GoToNewLine();
-                message = message.substring(max_chars_curr_line);
             }
         }
     }
@@ -140,6 +160,33 @@ class TextOnCanvas {
 
     // Computes the number of lines necessary for writing a string
     int NumLinesForString(String message){
-        return (message.length.toDouble() / NumCharactersPerLine()).ceil();
+        if (message == "") {
+            return 0;
+        }
+        while (message.endsWith("\n")) {
+            message = message.substring(0, message.length-1);
+        }
+        int result = 1;
+        num temp_x = X_MIN_POS;
+        for (var i = 0; i < message.length; i++) {
+            var c = message[i];
+            if (c == "\n") {
+                temp_x = X_MIN_POS;
+                result += 1;
+            } else{
+                if (temp_x + CHARACTER_WIDTH <= GetMaxXPos()) {
+                    temp_x += CHARACTER_WIDTH;
+                } else{
+                    temp_x = X_MIN_POS + CHARACTER_WIDTH;
+                    result += 1;
+                }
+            }
+        }
+        if (DEBUG_TOC) {
+            print("Estimate that it will take $result lines to print ${message}");
+            print("${message.length - message.replaceAll("\n", "").length}");
+        }
+        // return (message.length.toDouble() / NumCharactersPerLine()).ceil();
+        return result;
     }
 }
