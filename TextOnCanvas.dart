@@ -47,7 +47,7 @@ class TextOnCanvas {
         // Prevent annoying stretching, by making everything absolute size:
         canvas.width = canvas.clientWidth;
         canvas.height = canvas.clientHeight;
-
+        
         // Initialize the printing head to the botoom of the screen. Later, this should be changed.
         NewestLineYPos = Y_MIN_POS;
     }
