@@ -4,6 +4,7 @@ import 'Command.dart';
 import 'Console.dart';
 import 'FileView.dart';
 import 'MissionControl.dart';
+import 'WelcomeBanner.dart';
 
 class GameLogic {
     static Environment env;
@@ -21,6 +22,10 @@ class GameLogic {
         choose_next_level();
         start_level();
         con = new Console();
+    }
+
+    static void open_start_banner(){
+        WelcomeBanner.PrintBanner();
     }
 
     static void start_level() {
