@@ -20,7 +20,7 @@ class Console{
     String machine_name = "linux";
 
     // The TextOnCanvas Drawing tool that will actually print things to the screen
-    TextOnCanvas toc = new TextOnCanvas("Console");
+    TextOnCanvas toc = new TextOnCanvas("Console", "Terminal");
 
     Console(){
         if (DEBUG_CONSOLE) {
