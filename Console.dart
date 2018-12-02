@@ -5,9 +5,10 @@ import 'GameLogic.dart';
 import 'TextOnCanvas.dart';
 // import 'dart:collection';
 
-const DEBUG_CONSOLE = false;
+const DEBUG_CONSOLE = true;
 
 class Console{
+    
     // The command currently being parsed
     String current_command = "";
     // Our current path (for the print beside the line currently being parsed)
@@ -22,6 +23,9 @@ class Console{
     TextOnCanvas toc = new TextOnCanvas("Console");
 
     Console(){
+        if (DEBUG_CONSOLE) {
+            print("Building console");
+        }
         // Set up a handler that will redraw the contents of the window on resize.
         window.onResize.listen(this.ResizeHandler);
 
@@ -184,6 +188,15 @@ class Console{
         PrintAllTerminal();
     }
 
+    /**
+     * Clears the history of the commands and the screen.
+     */
+    void ClearHistory(){
+        commands_and_outputs = new List();
+        toc.NewestLineYPos = TextOnCanvas.Y_MIN_POS;
+        PrintAllTerminal();
+    }
+
     // Called when we are done reading a command from the user (i.e. when the enter key has been pressed).
     void FinishReadingCommand(){
         // Send the command to the Linux system (currently just prints to log)
@@ -195,8 +208,8 @@ class Console{
         commands_and_outputs.add([current_address, current_command, result]);
         // clears the command
         current_command = "";
-        // TODO: change this to get the current address from the Linux system.
-        current_address = current_address;
+        // Show new path as the absolute path.
+        current_address = GameLogic.env.pwd();
         // Lower us by however much the new prints take
         toc.NewestLineYPos += TextOnCanvas.LINE_HEIGHT * NumLinesCurrPrint;
         // Make sure we actually show the newest line:
