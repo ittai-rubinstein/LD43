@@ -53,7 +53,7 @@ class FileView {
             // If this directory is the current directory, print a * to mark the occasion:
             if ("$BaseDir/$dir/".replaceAll("//", "/") == GameLogic.env.pwd()) {
                 toc.setFillStyle("White");
-                toc.PrintStringToScreenMultipleLines((" " * 6) + "*");
+                toc.PrintStringToScreenMultipleLines((" " * 8) + "<-- You are here");
             }
             // print a new line
             toc.GoToNewLine();
@@ -63,6 +63,15 @@ class FileView {
 
         // Print the link children
         // Print the file children
+        for (var FileName in Files) {
+             // print the spacers and the |- s
+            toc.setFillStyle("White");
+            toc.PrintStringToScreenMultipleLines("$Spacers|-");
+            // print the dirname
+            toc.setFillStyle(FILE_COLOR);
+            toc.PrintStringToScreenMultipleLines("$FileName");
+            toc.GoToNewLine();
+        }
     }
 
     // /**
@@ -95,7 +104,7 @@ class FileView {
         // If we are in the / dir, we want to signify this with an asterisk
         if ("/" == GameLogic.env.pwd()) {
             toc.setFillStyle("White");
-            toc.PrintStringToScreenMultipleLines((" " * 6) + "*");
+            toc.PrintStringToScreenMultipleLines((" " * 8) + "<-- You are here");
         }
         toc.GoToNewLine();
         DrawFileViewFromDir("/", LEVEL_SPACER);
