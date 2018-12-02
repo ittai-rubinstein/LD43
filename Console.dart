@@ -1,4 +1,5 @@
 import 'dart:html';
+import 'FileView.dart';
 import 'dart:math';
 import 'GameLogic.dart';
 import 'TextOnCanvas.dart';
@@ -27,6 +28,7 @@ class Console{
         PrintAllTerminal();
         // print("Character width should be ${ctx.measureText("a").width}");
 
+        FileView.DrawFileView();
         
     }
 
@@ -46,10 +48,14 @@ class Console{
     void PrintAllTerminal(){
         // Clear the screen
         toc.ClearScreen();
-        print('Printing the terminal.');
+        if (DEBUG_CONSOLE) {
+            print('Printing the terminal.');
+        }
         // Prepare to print:
         toc.SetPrintingHead(GetTotalNumLines());
-        print(toc.YPosCurrLine);
+        if (DEBUG_CONSOLE) {
+            print(toc.YPosCurrLine);
+        }
         // Print the past values:
         for (var past_command in commands_and_outputs) {
             // Unpack the past_command
@@ -74,9 +80,10 @@ class Console{
     // Prints the pretty command line to the console
     void PrintCommandLine(String path, String command){
         // For the user @ machine part, we want a yellow font
-        print('Printing the username $username@$machine_name');
+        if(DEBUG_CONSOLE){
+            print('Printing the username $username@$machine_name');
+        }
         toc.setFillStyle("Yellow");
-        print(toc.ctx.fillStyle);
         toc.PrintStringToScreenMultipleLines("$username@$machine_name");
         // For the ":" we want a white font
         toc.setFillStyle("White");
@@ -127,6 +134,7 @@ class Console{
         // If the length of event.key is 1, then the event is a character to be added:
         if (event.key.length == 1) {
             AddCharToConsole(event.key);
+            event.preventDefault();
         } else {
             // Deal with all other cases:
             switch(event.key){
@@ -141,10 +149,32 @@ class Console{
                 toc.NewestLineYPos = toc.NewestLineYPos + (TextOnCanvas.LINE_HEIGHT / 4);
                 PrintAllTerminal();
                 break;
+                case 'Backspace':
+                RemoveCharFromCurrCommand();
+                break;
                 default:
                 break;
             }
         }
+    }
+
+
+    /**
+     * Removes the last character from the line being processed (a backspace).
+     * If no such character exists, does nothing. TODO make it beep on illegal backspace.
+     */
+    void RemoveCharFromCurrCommand(){
+        // If is illegal backspace
+        if (current_command.length == 0) {
+            if (DEBUG_CONSOLE) {
+                print("Illegal Backspace");
+            }
+            return;
+        }
+        // Erase last character
+        current_command = current_command.substring(0, current_command.length-1);
+        // Reprint whole screen
+        PrintAllTerminal();
     }
 
     // Called when we are done reading a command from the user (i.e. when the enter key has been pressed).
@@ -165,6 +195,7 @@ class Console{
         // Make sure we actually show the newest line:
         toc.NewestLineYPos = min(toc.GetMaxYPos(), max(TextOnCanvas.Y_MIN_POS, toc.NewestLineYPos));
         PrintAllTerminal();
+        FileView.OnNewCommand();
     }
 
     // When parsing user keyboard, this adds the actual character to the command line.
