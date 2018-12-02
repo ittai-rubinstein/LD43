@@ -15,7 +15,15 @@ class LinuxException implements Exception {
 }
 
 abstract class Command {
-    String apply(String stdin, Environment env);
+    String execute(String stdin, Environment env) {
+        if (GameLogic.commands_left == 0)
+            return "";
+        GameLogic.commands_left--;
+        return apply(stdin, env);
+    }
+    String apply(String stdin, Environment env) {
+        throw Exception("internal error");
+    }
 }
 
 abstract class BaseCommand extends Command {
@@ -35,9 +43,9 @@ class CompoundCommand extends Command {
     Command a, b;
 
     CompoundCommand(this.a, this.b);
-    String apply(String stdin, Environment env) {
-        String middle_string = a.apply(stdin, env);
-        return b.apply(middle_string, env);
+    String execute(String stdin, Environment env) {
+        String middle_string = a.execute(stdin, env);
+        return b.execute(middle_string, env);
     }
 
     String toString() {
@@ -49,7 +57,7 @@ class FileStdoutCommand extends Command {
     Command command;
     String stdout_filename;
     FileStdoutCommand(this.command, this.stdout_filename);
-    String apply(String stdin, Environment env) {
+    String execute(String stdin, Environment env) {
         String target;
         try {
             target = env.absolute_path(stdout_filename);
@@ -58,7 +66,7 @@ class FileStdoutCommand extends Command {
         }
         if (!env.exists(target))
             env.create_new_file(target);
-        String output = command.apply(stdin, env);
+        String output = command.execute(stdin, env);
         if (env.exists(target))
             env.write_file(target, output);
         return "";
@@ -184,13 +192,13 @@ class Mkdir extends BaseCommand {
 class Xargs extends BaseCommand {
     Xargs(List<String> arguments) : super(arguments, 'xargs');
 
-    String apply(String stdin, Environment env) {
+    String execute(String stdin, Environment env) {
         if(arguments.length == 0) {
             return "xargs: no command specified\n";
         }
         BaseCommand cmd_to_run = parse_atomic_command(
             arguments.join(" ") + " " + stdin);
-        return cmd_to_run.apply("", env);
+        return cmd_to_run.execute("", env);
     }
 
     String getHelp() => "Banana";

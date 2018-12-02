@@ -74,7 +74,7 @@ class FileContentLevel implements Level{
 
 class RemoveAllButLevel implements Level {
     String description = "Remove the directories d1 - d9, while maitaining"
-                        " a direcory called 'innocent'. We dont't care about"
+                        " a direcory called 'innocent'. We don't care about"
                         " the contents of the directories";
 
     List<List<String>> solutions = [
@@ -118,7 +118,36 @@ class RemoveAllButLevel implements Level {
     }
 }
 
-List<Level> LEVELS = [SwapLevel(), FileContentLevel(), RemoveAllButLevel()];
+class MoveDirectoryLevel implements Level {
+    String description = "TODO";
+
+    List<List<String>> solutions = [[]];
+
+    int BASE_EMOJI = 0x1f550;
+
+    Environment setup() {
+        Environment env = Environment();
+        env.create_new_dir("/bad");
+        for (int i = 1;i < 10;i++) {
+            env.create_new_file("/bad/file$i", String.fromCharCode(BASE_EMOJI+i));
+        }
+        return null;
+    }
+
+    bool is_solved(Environment env) {
+        try {
+            for (int i = 1;i < 10;i++) {
+                if (env.read_file("/good/file$i") != String.fromCharCode(BASE_EMOJI+i))
+                    return false;
+            }
+        } on FileException {
+            return false;
+        }
+        return true;
+    }
+}
+
+List<Level> LEVELS = [SwapLevel(), FileContentLevel(), MoveDirectoryLevel(), RemoveAllButLevel()];
 
 void test_levels() {
     for (Level level in LEVELS) {
@@ -126,7 +155,7 @@ void test_levels() {
             Environment env = level.setup();
             for (String cmd in sol) {
                 Command command = parse_command(cmd);
-                command.apply("", env);
+                command.execute("", env);
             }
             if (!level.is_solved(env)) {
                 print("Level $level is broken!");

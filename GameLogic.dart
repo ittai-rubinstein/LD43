@@ -44,7 +44,7 @@ class GameLogic {
             if (choice_options.length == 3)
                 break;
         }
-        print("diskd: Low disk space!\nchoose a command to sacrifice:");
+        print("diskd: Low disk space!\nChoose a command to sacrifice:");
         for (int i = 0;i < choice_options.length;i++) {
             print("\t${i+1}.${choice_options[i]}");
         }
@@ -55,6 +55,13 @@ class GameLogic {
         await Future.delayed(Duration(seconds: 2));
         con.ClearHistory();
         start_sacrifice();
+    }
+
+    static on_no_commands_left() async {
+        // TODO: block input
+        await Future.delayed(Duration(seconds: 2));
+        // TODO: allow input
+        start_level();
     }
 
     static String on_input(String input){
@@ -75,17 +82,18 @@ class GameLogic {
         }
         try {
             Command command = parse_command(input);
-            String cmd_output = command.apply("", env);
+            String cmd_output = command.execute("", env);
+
+            if (commands_left < 0 || (commands_left == 0 && !current_level.is_solved(env))) {
+                on_no_commands_left();
+                return "Time is up! Do it in 5 commands, or don't do it at all.";
+            }
+
             if (current_level.is_solved(env)) {
                 on_level_complete();
                 cmd_output += "\n\n  SUCCESS!\n\n";
-                return cmd_output;
             }
-            commands_left--;
-            if (commands_left == 0) {
-                // TODO: add a meaningful message
-                start_level();
-            }
+            
             return cmd_output;
         } on ParseException catch (e) {
             return e.cause;

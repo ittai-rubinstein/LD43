@@ -116,10 +116,10 @@ class FileView {
         DrawFileViewFromDir("/", LEVEL_SPACER);
 
         // Print the countdown
-        toc.XPosCurrPrint = toc.GetMaxXPos() - toc.ctx.measureText("Countdown: ${GameLogic.commands_left}").width;
+        toc.XPosCurrPrint = toc.GetMaxXPos() - toc.ctx.measureText("Mana: ${GameLogic.commands_left}MP").width;
         toc.YPosCurrLine = TextOnCanvas.Y_MIN_POS;
         toc.setFillStyle("Red");
-        toc.PrintStringToScreenSimple("Countdown: ${GameLogic.commands_left}");
+        toc.PrintStringToScreenSimple("Mana: ${GameLogic.commands_left}MP");
     }
 
 
