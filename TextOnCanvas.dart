@@ -15,7 +15,7 @@ class TextOnCanvas {
     static const int X_MIN_POS = 7;
     // The converse values depend upon the window size (which may be dynamic?)
     num GetMaxYPos(){
-        return 0.9 * canvas.height - Y_MIN_POS;
+        return canvas.height - Y_MIN_POS;
     }
     num GetMaxXPos(){
         return canvas.width - X_MIN_POS;
