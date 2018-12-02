@@ -1,6 +1,16 @@
 import "Environment.dart";
 import 'GameLogic.dart';
 
+
+class ManPage {
+    String cmd;
+    String synopsis;
+    List<String> usages;
+    List<String> description;
+
+    ManPage(this.cmd, this.synopsis, this.usages, this.description);
+}
+
 List<String> get_absolute_children(String path, Environment env) {
     return env.get_children(path).map((child) => env.absolute_path(path + "/" + child)).toList();
 }
@@ -27,7 +37,7 @@ abstract class BaseCommand extends Command {
         return "$cmd_name(" + arguments.join(", ") + ")";
     }
 
-    String getHelp();
+    ManPage getHelp();
 }
 
 // Pipe command A into command B
@@ -72,7 +82,7 @@ class Echo extends BaseCommand {
         return arguments.join(" ") + "\n";
     }
 
-    String getHelp() => "ECHO(1)        User Commands        ECHO(1)\n\nNAME\n       echo - display a line of text\n\nSYNOPSIS\n       echo [STRING]...\n\nDESCRIPTION\n       Echo the STRING(s) to standard output.";
+    ManPage getHelp() => ManPage("echo", "displays a line of text", ["echo [STRING]..."], ["Echo the STRING(s) to standard output."]);
 }
 
 class Cat extends BaseCommand {
@@ -97,7 +107,7 @@ class Cat extends BaseCommand {
         return datas.join("\n") + "\n";
     }
 
-    String getHelp() => "Banana";
+    ManPage getHelp() => ManPage("cat", "", [], [""]);
 }
 
 class Ls extends BaseCommand {
@@ -126,7 +136,7 @@ class Ls extends BaseCommand {
         return ret + "\n";
     }
 
-    String getHelp() => "Banana";
+    ManPage getHelp() => ManPage("cat", "", [], [""]);
 }
 
 class Touch extends BaseCommand {
@@ -150,7 +160,7 @@ class Touch extends BaseCommand {
         return ret + "\n";
     }
 
-    String getHelp() => "Banana";
+    ManPage getHelp() => ManPage("cat", "", [], [""]);
 }
 
 class Mkdir extends BaseCommand {
@@ -178,7 +188,7 @@ class Mkdir extends BaseCommand {
         return ret + "\n";
     }
 
-    String getHelp() => "Banana";
+    ManPage getHelp() => ManPage("cat", "", [], [""]);
 }
 
 class Xargs extends BaseCommand {
@@ -193,7 +203,7 @@ class Xargs extends BaseCommand {
         return cmd_to_run.apply("", env);
     }
 
-    String getHelp() => "Banana";
+    ManPage getHelp() => ManPage("cat", "", [], [""]);
 }
 
 class Pwd extends BaseCommand {
@@ -203,7 +213,7 @@ class Pwd extends BaseCommand {
         return env.pwd() + "\n";
     }
 
-    String getHelp() => "Banana";
+    ManPage getHelp() => ManPage("cat", "", [], [""]);
 }
 
 class Cd extends BaseCommand {
@@ -224,7 +234,7 @@ class Cd extends BaseCommand {
         return "";
     }
     
-    String getHelp() => "Banana";
+    ManPage getHelp() => ManPage("cat", "", [], [""]);
 }
 
 List<String> _find_impl(String path, Environment env) {
@@ -256,7 +266,7 @@ class Find extends BaseCommand {
         return ret.join("\n") + "\n";
     }
 
-    String getHelp() => "Banana";
+    ManPage getHelp() => ManPage("cat", "", [], [""]);
 }
 
 class Tee extends BaseCommand {
@@ -279,7 +289,7 @@ class Tee extends BaseCommand {
         return stdin;
     }
 
-    String getHelp() => "Banana";
+    ManPage getHelp() => ManPage("cat", "", [], [""]);
 }
 
 void _cp_impl(String from, String to, Environment env) {
@@ -422,7 +432,7 @@ class Cp extends BaseCommand {
         return real_ret.join("\n") + "\n";
     }
 
-    String getHelp() => "Banana";
+    ManPage getHelp() => ManPage("cat", "", [], [""]);
 }
 
 List<String> _rm_impl(String path, Environment env) {
@@ -468,7 +478,7 @@ class Rm extends BaseCommand {
         return real_ret.join("\n") + "\n";
     }
 
-    String getHelp() => "Banana";
+    ManPage getHelp() => ManPage("cat", "", [], [""]);
 }
 
 class Rmdir extends BaseCommand {
@@ -495,7 +505,7 @@ class Rmdir extends BaseCommand {
         return result.join("\n");
     }
 
-    String getHelp() => "Banana";
+    ManPage getHelp() => ManPage("cat", "", [], [""]);
 }
 
 List<String> _mv_impl(String from, String to, Environment env) {
@@ -546,7 +556,7 @@ class Mv extends BaseCommand {
         return real_ret.join("\n") + "\n";
     }
 
-    String getHelp() => "Banana";
+    ManPage getHelp() => ManPage("cat", "", [], [""]);
 }
 
 class Man extends BaseCommand {
@@ -561,13 +571,23 @@ class Man extends BaseCommand {
         var cmd_name = arguments[0];
         try {
             var cmd = command_name_and_arguments_to_command(cmd_name, List<String> ());
-            return cmd.getHelp();
+            var page = cmd.getHelp();
+            var upperCmd = page.cmd.toUpperCase();
+            var usages = page.usages.map((s) => '       ' + s).join('\n');
+            var desc = page.description.map((s) => '       ' + s).join('\n');
+            return "${upperCmd}(1)        User Commands        ${upperCmd}(1)\n\n"
+                 + "NAME\n"
+                 + "       ${page.cmd} - ${page.synopsis}\n\n"
+                 + "SYNOPSIS\n"
+                 + usages + "\n\n"
+                 + "DESCRIPTION\n"
+                 + desc;
         } catch (ParseException) {
             return "No manual entry for ${cmd_name}"; 
         }
     }
 
-    String getHelp() => "Are you serious?";
+    ManPage getHelp() => ManPage("cat", "", [], [""]);
 }
 
 class EmptyCommand extends BaseCommand {
@@ -579,7 +599,7 @@ class EmptyCommand extends BaseCommand {
         return stdin;
     }
 
-    String getHelp() => "Banana";
+    ManPage getHelp() => ManPage("cat", "", [], [""]);
 }
 
 class ParseException implements LinuxException {
