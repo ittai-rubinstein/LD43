@@ -12,7 +12,7 @@ class Console{
     // The command currently being parsed
     String current_command = "";
     // Our current path (for the print beside the line currently being parsed)
-    String current_address = "~";
+    String current_address = "/";
     // A list of the past commands, outputs and paths (currently only for printing history; in the future perhaps for completions)
     List commands_and_outputs = [];
     // The user name and machine namefor the username@machine:
@@ -144,23 +144,27 @@ class Console{
         }
         // If the length of event.key is 1, then the event is a character to be added:
         if (event.key.length == 1) {
-            AddCharToConsole(event.key);
             event.preventDefault();
+            AddCharToConsole(event.key);
         } else {
             // Deal with all other cases:
             switch(event.key){
                 case 'Enter':
+                event.preventDefault();
                 FinishReadingCommand();
                 break;
                 case 'ArrowDown':
+                event.preventDefault();
                 toc.NewestLineYPos = max(TextOnCanvas.Y_MIN_POS, toc.NewestLineYPos - TextOnCanvas.LINE_HEIGHT / 4);
                 PrintAllTerminal();
                 break;
                 case 'ArrowUp':
+                event.preventDefault();
                 toc.NewestLineYPos = toc.NewestLineYPos + (TextOnCanvas.LINE_HEIGHT / 4);
                 PrintAllTerminal();
                 break;
                 case 'Backspace':
+                event.preventDefault();
                 RemoveCharFromCurrCommand();
                 break;
                 default:

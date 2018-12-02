@@ -7,6 +7,7 @@ import 'MissionControl.dart';
 import 'WelcomeBanner.dart';
 import 'TextOnCanvas.dart';
 import 'dart:math';
+import 'WinScreen.dart';
 
 class GameLogic {
     static Environment env;
@@ -91,14 +92,14 @@ class GameLogic {
     }
 
     static on_level_complete() async {
-        await Future.delayed(Duration(seconds: 2));
+        await Future.delayed(Duration(seconds: 1));
         start_sacrifice();
         
     }
 
     static on_no_commands_left() async {
         // TODO: block input
-        await Future.delayed(Duration(seconds: 2));
+        await Future.delayed(Duration(seconds: 1));
         // TODO: allow input
         start_level();
     }
@@ -141,6 +142,8 @@ class GameLogic {
         }
     }
 
+
+
     static void choose_next_level() {
         int solved_level = level_num;
         level_num++;
@@ -149,8 +152,10 @@ class GameLogic {
                 level_num = 0;
             if (LEVELS[level_num].status_without('nonexistent-command') != LevelStatus.IMPOSSIBLE)
                 break;
-            if (level_num == solved_level)
-                print("You win");
+            if (level_num == solved_level){
+                VictoryScreen.PrintBanner();
+                con.toc = null;
+            }
         }
         current_level = LEVELS[level_num];
     }
