@@ -63,7 +63,53 @@ class FileContentLevel implements Level{
     }
 }
 
-List<Level> LEVELS = [SwapLevel(), FileContentLevel()];
+class RemoveAllButLevel implements Level {
+    String description = "Remove the directories d1 - d9, while maitaining"
+                        " a direcory called 'innocent'. We dont't care about"
+                        " the contents of the directories";
+
+    List<List<String>> solutions = [
+        ["cd innocent",
+        "rm .."],
+        ["rm .",
+        "mkdir innocent"],
+        ["touch innocent/guard",
+        "find / | xargs rmdir"]
+    ];
+
+    Environment setup() {
+        Environment env = Environment();
+        for (int i = 1;i < 10;i++)
+            env.create_new_dir("/d$i");
+        env.create_new_dir("innocent");
+        return env;
+    }
+
+    bool is_solved(Environment env) {
+        bool is_link;
+        for (int i = 1;i < 10;i++) {
+            try {
+                is_link = env.is_link("/d$i");
+            } on FileException {
+                continue;  // nonexistent
+            }
+            if (is_link)
+                continue;
+            if (env.get_type("/d$i") == NodeType.DIRECTORY)
+                return false;  // should have been removed
+        }
+        try {
+            is_link = env.is_link("/innocent");
+        } on FileException {
+            return false;  // nonexistent
+        }
+        if (is_link || env.get_type("/innocent") != NodeType.DIRECTORY)
+            return false;
+        return true;
+    }
+}
+
+List<Level> LEVELS = [SwapLevel(), FileContentLevel(), RemoveAllButLevel()];
 
 void test_levels() {
     for (Level level in LEVELS) {

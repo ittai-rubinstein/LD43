@@ -138,6 +138,8 @@ class Environment {
             return '/';   // path was all slashes
 
         var slash_pos = path.lastIndexOf('/');
+        if (slash_pos == 0)
+            return '/';   // input of the type "/<dirname>"
         return path.substring(0, slash_pos);
     }
 

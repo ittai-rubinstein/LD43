@@ -4,10 +4,12 @@ import 'Command.dart';
 
 class GameLogic {
     static Environment env;
+    static List<String> removed_commands;
 
     static SwapLevel level;
     static void reset() {
         level = SwapLevel();
+        removed_commands = [];
         start_level();
     }
 

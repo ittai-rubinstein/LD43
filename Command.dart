@@ -1,4 +1,5 @@
 import "Environment.dart";
+import 'GameLogic.dart';
 
 List<String> get_absolute_children(String path, Environment env) {
     return env.get_children(path).map((child) => env.absolute_path(path + "/" + child)).toList();
@@ -420,7 +421,7 @@ List<String> _rm_impl(String path, Environment env) {
     try {
         env.rmdir(path);
     } on FileException catch(e) {
-        ret.add("cannot rmeove $path: parent of current directory");
+        ret.add("cannot remove $path: parent of current directory");
     }
     return ret;
 }
@@ -441,6 +442,31 @@ class Rm extends BaseCommand {
             return "";
         }
         return real_ret.join("\n") + "\n";
+    }
+}
+
+class Rmdir extends BaseCommand {
+    Rmdir(List<String> arguments) : super(arguments, 'rmdir');
+
+    String apply(String stdin, Environment env) {
+        List<String> result = [];
+        for (String arg in arguments) {
+            try {
+                if (env.is_link(arg) || env.get_type(arg) != NodeType.DIRECTORY) {
+                    result.add("rm: Cannot remove '$arg': Not a directory");
+                    continue;
+                }
+            } on FileException {
+                result.add("rm: Cannot remove '$arg': Not a directory");
+                continue;
+            }
+            if (env.get_children(arg).length != 0) {
+                result.add("rm: Cannot remove '$arg': Not empty");
+                continue;
+            }
+            env.rmdir(arg);
+        }
+        return result.join("\n");
     }
 }
 
@@ -509,6 +535,8 @@ class ParseException implements LinuxException {
 }
 
 BaseCommand command_name_and_arguments_to_command(String cmd_name, List<String> arguments) {
+    if (GameLogic.removed_commands.contains(cmd_name))
+        throw ParseException("No command named $cmd_name");
     switch(cmd_name) {
         case 'cat': return Cat(arguments); break;
         case 'echo': return Echo(arguments); break;
@@ -523,6 +551,7 @@ BaseCommand command_name_and_arguments_to_command(String cmd_name, List<String> 
         case 'rm': return Rm(arguments); break;
         case 'mv': return Mv(arguments); break;
         case 'tee': return Tee(arguments); break;
+        case 'rmdir': return Rmdir(arguments); break;
         default: throw ParseException("No command named $cmd_name");
     }
 }
