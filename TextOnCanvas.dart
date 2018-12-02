@@ -9,8 +9,10 @@ class TextOnCanvas {
     // The 2d drawing context
     CanvasRenderingContext2D ctx;
 
+    String Title;
+
     // The highest point visible in the screen:
-    static const num Y_MIN_POS = 20;
+    static const num Y_MIN_POS = 70;
     // The leftmost point visible in the screen:
     static const int X_MIN_POS = 7;
     // The converse values depend upon the window size (which may be dynamic?)
@@ -18,10 +20,10 @@ class TextOnCanvas {
         return canvas.height - Y_MIN_POS;
     }
     num GetMaxXPos(){
-        return canvas.width - X_MIN_POS;
+        return canvas.width - X_MIN_POS - 2;
     }
     // How far down we need to jump between lines:
-    static const int LINE_HEIGHT = Y_MIN_POS;
+    static const int LINE_HEIGHT = 20;
 
     // The position of the current line being edited. These values will be updated as the prints goes on.
     num YPosCurrLine = Y_MIN_POS;
@@ -33,11 +35,14 @@ class TextOnCanvas {
     // The width of a character. Measured in a horani manner.
     static const num CHARACTER_WIDTH = 10.8369140625;
 
-    TextOnCanvas(String canvas_name){
+    TextOnCanvas(String canvas_name, String title){
         // Ask the html for the canvas of the console, on which we will print everything:
         canvas = querySelector('#$canvas_name');
         // Generate a 2d drawing context:
         ctx = canvas.getContext('2d');
+
+        // Save Title for printing.
+        Title = title;
 
         // Debug prints
         if (DEBUG_TOC) {
@@ -52,6 +57,15 @@ class TextOnCanvas {
 
         // Initialize the printing head to the botoom of the screen. Later, this should be changed.
         NewestLineYPos = Y_MIN_POS;
+    }
+
+    void PrintTitle(){
+        // Set print parameters
+        ctx.font = "28px Monospace";
+        ctx.fillStyle = "Grey";
+        // Compute the width of the title
+        num TitleWidth = ctx.measureText(Title).width;
+        ctx.fillText(Title, (canvas.width - TitleWidth) / 2, 40);
     }
 
 
@@ -86,6 +100,8 @@ class TextOnCanvas {
         canvas.height = canvas.clientHeight;
         // Clear the screen
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // Print the title
+        PrintTitle();
         // Set the font and color
         setFillStyle(fillStyle);
         ctx.font = "18px monospace";
