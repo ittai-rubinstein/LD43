@@ -1,7 +1,7 @@
 import 'dart:html';
 import 'dart:math';
 
-const bool DEBUG_TOC = false;
+const bool DEBUG_TOC = true;
 
 class TextOnCanvas {
     // The canvas on which we will be drawing the text
@@ -15,7 +15,7 @@ class TextOnCanvas {
     static const int X_MIN_POS = 7;
     // The converse values depend upon the window size (which may be dynamic?)
     num GetMaxYPos(){
-        return canvas.height - Y_MIN_POS;
+        return 0.9 * canvas.height - Y_MIN_POS;
     }
     num GetMaxXPos(){
         return canvas.width - X_MIN_POS;
@@ -101,7 +101,7 @@ class TextOnCanvas {
             // If it contains no \n chars, then it is determined by the width of the screen.
             // If it does contain a \n char, then it is determined by the first of the two.
             num max_chars_curr_line = min(((GetMaxXPos() - XPosCurrPrint) / CHARACTER_WIDTH).floor(), 
-                                            ((message.indexOf("\n") <= 0)?(1000000):(message.indexOf("\n") + 1)));
+                                            ((message.indexOf("\n") < 0)?(1000000):(message.indexOf("\n") + 1)));
             // If all the data fits in one line, we print it, and don't go to a new line
             if (message.length <= max_chars_curr_line) {
                 if (DEBUG_TOC) {

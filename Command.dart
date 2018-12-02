@@ -26,6 +26,8 @@ abstract class BaseCommand extends Command {
     String toString() {
         return "$cmd_name(" + arguments.join(", ") + ")";
     }
+
+    String getHelp();
 }
 
 // Pipe command A into command B
@@ -69,6 +71,8 @@ class Echo extends BaseCommand {
     String apply(String stdin, Environment env) {
         return arguments.join(" ") + "\n";
     }
+
+    String getHelp() => "ECHO(1)        User Commands        ECHO(1)\n\nNAME\n       echo - display a line of text\n\nSYNOPSIS\n       echo [STRING]...\n\nDESCRIPTION\n       Echo the STRING(s) to standard output.";
 }
 
 class Cat extends BaseCommand {
@@ -92,6 +96,8 @@ class Cat extends BaseCommand {
         }
         return datas.join("\n") + "\n";
     }
+
+    String getHelp() => "Banana";
 }
 
 class Ls extends BaseCommand {
@@ -119,6 +125,8 @@ class Ls extends BaseCommand {
             return "";
         return ret + "\n";
     }
+
+    String getHelp() => "Banana";
 }
 
 class Touch extends BaseCommand {
@@ -141,6 +149,8 @@ class Touch extends BaseCommand {
             return "";
         return ret + "\n";
     }
+
+    String getHelp() => "Banana";
 }
 
 class Mkdir extends BaseCommand {
@@ -167,6 +177,8 @@ class Mkdir extends BaseCommand {
             return "";
         return ret + "\n";
     }
+
+    String getHelp() => "Banana";
 }
 
 class Xargs extends BaseCommand {
@@ -180,6 +192,8 @@ class Xargs extends BaseCommand {
             arguments.join(" ") + " " + stdin);
         return cmd_to_run.apply("", env);
     }
+
+    String getHelp() => "Banana";
 }
 
 class Pwd extends BaseCommand {
@@ -188,6 +202,8 @@ class Pwd extends BaseCommand {
     String apply(String stdin, Environment env) {
         return env.pwd() + "\n";
     }
+
+    String getHelp() => "Banana";
 }
 
 class Cd extends BaseCommand {
@@ -207,6 +223,8 @@ class Cd extends BaseCommand {
         env.cd(arguments[0]);
         return "";
     }
+    
+    String getHelp() => "Banana";
 }
 
 List<String> _find_impl(String path, Environment env) {
@@ -237,6 +255,8 @@ class Find extends BaseCommand {
             return "";
         return ret.join("\n") + "\n";
     }
+
+    String getHelp() => "Banana";
 }
 
 class Tee extends BaseCommand {
@@ -258,6 +278,8 @@ class Tee extends BaseCommand {
         env.write_file(target, stdin);
         return stdin;
     }
+
+    String getHelp() => "Banana";
 }
 
 void _cp_impl(String from, String to, Environment env) {
@@ -399,6 +421,8 @@ class Cp extends BaseCommand {
         }
         return real_ret.join("\n") + "\n";
     }
+
+    String getHelp() => "Banana";
 }
 
 List<String> _rm_impl(String path, Environment env) {
@@ -443,6 +467,8 @@ class Rm extends BaseCommand {
         }
         return real_ret.join("\n") + "\n";
     }
+
+    String getHelp() => "Banana";
 }
 
 class Rmdir extends BaseCommand {
@@ -468,6 +494,8 @@ class Rmdir extends BaseCommand {
         }
         return result.join("\n");
     }
+
+    String getHelp() => "Banana";
 }
 
 List<String> _mv_impl(String from, String to, Environment env) {
@@ -517,6 +545,29 @@ class Mv extends BaseCommand {
         }
         return real_ret.join("\n") + "\n";
     }
+
+    String getHelp() => "Banana";
+}
+
+class Man extends BaseCommand {
+    Man(List<String> arguments) : super(arguments, 'man');
+
+    String apply(String stdin, Environment env) {
+        if (arguments.length < 1)
+        {
+            return "What manual page do you want?";
+        }
+
+        var cmd_name = arguments[0];
+        try {
+            var cmd = command_name_and_arguments_to_command(cmd_name, List<String> ());
+            return cmd.getHelp();
+        } catch (ParseException) {
+            return "No manual entry for ${cmd_name}"; 
+        }
+    }
+
+    String getHelp() => "Are you serious?";
 }
 
 class EmptyCommand extends BaseCommand {
@@ -527,12 +578,15 @@ class EmptyCommand extends BaseCommand {
     String apply(String stdin, Environment env) {
         return stdin;
     }
+
+    String getHelp() => "Banana";
 }
 
 class ParseException implements LinuxException {
     String cause;
     ParseException(this.cause);
 }
+
 
 BaseCommand command_name_and_arguments_to_command(String cmd_name, List<String> arguments) {
     if (GameLogic.removed_commands.contains(cmd_name))
@@ -552,6 +606,7 @@ BaseCommand command_name_and_arguments_to_command(String cmd_name, List<String> 
         case 'mv': return Mv(arguments); break;
         case 'tee': return Tee(arguments); break;
         case 'rmdir': return Rmdir(arguments); break;
+        case 'man': return Man(arguments); break;
         default: throw ParseException("No command named $cmd_name");
     }
 }
