@@ -40,9 +40,11 @@ class TextOnCanvas {
         ctx = canvas.getContext('2d');
 
         // Debug prints
-        print("Canvas name: $canvas_name");
-        print(canvas);
-        print(ctx);
+        if (DEBUG_TOC) {
+            print("Canvas name: $canvas_name");
+            print(canvas);
+            print(ctx);
+        }
 
         // Prevent annoying stretching, by making everything absolute size:
         canvas.width = canvas.clientWidth;
@@ -66,8 +68,6 @@ class TextOnCanvas {
      */
     void setFillStyle(String new_style){
         ctx.fillStyle = new_style;
-        print(new_style);
-        print(ctx.fillStyle);
     }
 
     // Prints a string that is not expected to require a new line
