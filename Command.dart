@@ -534,6 +534,8 @@ class ParseException implements LinuxException {
     ParseException(this.cause);
 }
 
+const ALL_COMMANDS = ['cat', 'echo', 'ls', 'touch', 'xargs', 'mkdir', 
+                      'pwd', 'cd', 'find', 'cp', 'rm', 'mv', 'tee', 'rmdir', '>'];
 BaseCommand command_name_and_arguments_to_command(String cmd_name, List<String> arguments) {
     if (GameLogic.removed_commands.contains(cmd_name))
         throw ParseException("No command named $cmd_name");
@@ -577,6 +579,8 @@ Command parse_command(String cmd_text) {
     }
 
     if (cmd_text.contains(">")) {
+        if (GameLogic.removed_commands.contains(">"))
+            throw ParseException("Invalid character '>'");
         List<String> parts = cmd_text.split(">");
         if (parts.length > 2)
             throw ParseException("Too many occurences of >");
