@@ -96,7 +96,9 @@ class FileContentLevel extends Level{
 
     List<List<String>> solutions = [
         ["echo world > hello"],
-        ["echo world | tee hello"]];
+        ["echo world | tee hello"],
+        ["mkdir boo", "touch boo/world", "ls boo > hello"],
+        ["mkdir boo", "find | tee boo/world", "ls boo | tee hello"]];
 
     Environment setup() {
         return Environment();
@@ -107,6 +109,33 @@ class FileContentLevel extends Level{
             if (env.read_file("hello").trim().toLowerCase() == "world")
                 return true;
         } catch (e) { 
+            return false;
+        }
+        return false;
+    }
+}
+
+class CopyEmojiFileLevel extends Level {
+    static const String filename = 'power\u{26a1}';
+    String description = "There is a file named $filename in /."
+                         " Create a file with the same name in /turn_on. Its contents don't matter\n";
+    List<List<String>> solutions = [[
+        "cd turn_on", "ls .. | xargs touch"]
+        ];
+    
+    Environment setup() {
+        Environment env = Environment();
+        env.create_new_dir("turn_on");
+        env.create_new_file("/$filename", "Something");
+        return env;
+    }
+
+    bool is_solved(Environment env) {
+        try {
+            if (env.exists("/turn_on/$filename") && 
+                env.get_type("/turn_on/$filename") == NodeType.FILE)
+                return true;
+        } on FileException {
             return false;
         }
         return false;
@@ -161,29 +190,39 @@ class RemoveAllButLevel extends Level {
 }
 
 class MoveDirectoryLevel extends Level {
-    String description = "Create a directory named 'good' with the files file1 - file9"
-                         " from /bad";
+    int BASE_EMOJI = 0x23e9;
+    String description = "Create a directory named 'good' with the files"
+                         " file\u{23e9} - file\u{23ec} from /bad\n"
+                         "Note: the files are empty.";
 
     List<List<String>> solutions = [
         ["mv bad good"],
-        ["cp bad good"]
+        ["cp bad good"],
+        ["mkdir good",
+        "cd bad",
+        "find . > ../boo",
+        "cd ../good",
+        "cat ../boo | xargs touch"],
+        ["mkdir good",
+        "cd bad",
+        "find . | tee ../boo",
+        "cd ../good",
+        "cat ../boo | xargs touch"]
     ];
-
-    int BASE_EMOJI = 0x1f550;
 
     Environment setup() {
         Environment env = Environment();
         env.create_new_dir("/bad");
-        for (int i = 1;i < 10;i++) {
-            env.create_new_file("/bad/file$i", String.fromCharCode(BASE_EMOJI+i));
+        for (int i = 0;i < 4;i++) {
+            env.create_new_file("/bad/file" + String.fromCharCode(BASE_EMOJI+i));
         }
         return env;
     }
 
     bool is_solved(Environment env) {
         try {
-            for (int i = 1;i < 10;i++) {
-                if (env.read_file("/good/file$i") != String.fromCharCode(BASE_EMOJI+i))
+            for (int i = 0;i < 4;i++) {
+                if (!env.exists("/good/file" + String.fromCharCode(BASE_EMOJI+i)))
                     return false;
             }
         } on FileException {
@@ -193,7 +232,7 @@ class MoveDirectoryLevel extends Level {
     }
 }
 
-List<Level> LEVELS = [FileContentLevel(), SwapLevel(),  MoveDirectoryLevel(), RemoveAllButLevel()];
+List<Level> LEVELS = [FileContentLevel(), SwapLevel(), CopyEmojiFileLevel(), MoveDirectoryLevel(), RemoveAllButLevel()];
 
 void test_levels() {
     GameLogic.commands_left = 1000000;

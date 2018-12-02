@@ -2,7 +2,7 @@ import 'TextOnCanvas.dart';
 import 'GameLogic.dart';
 import 'dart:html';
 
-class WelcomeBanner{
+class WelcomeBanner {
     static const String GameName = "Out of Space";
     static TextOnCanvas toc = new TextOnCanvas("Console", "$GameName");
     static const String WelcomeMessage = "Welcome to $GameName!!!\n" +

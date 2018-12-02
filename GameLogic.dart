@@ -35,8 +35,8 @@ class GameLogic {
         MissionControl.UpdateMission(current_level.description);
 
         
-        // Initiailize to 5 commands per level.
-        commands_left = 5;
+        // Initiailize to 10 commands per level.
+        commands_left = 10;
         FileView.OnNewCommand();
         if (con != null) {
             con.ClearHistory();
@@ -52,6 +52,8 @@ class GameLogic {
         for (String cmd in command_order) {
             if (removed_commands.contains(cmd))
                 continue;
+            if (removed_commands.length < 3 && cmd == 'xargs')
+                continue;  // get to the xargs tutorial with xargs
             LevelStatus status = current_level.status_without(cmd);
             if (status == LevelStatus.IMPOSSIBLE || status == LevelStatus.SAME)
                 continue;
@@ -64,6 +66,8 @@ class GameLogic {
         if (choice_options.length < 3) {
             for (String cmd in command_order) {
                 if (removed_commands.contains(cmd))
+                    continue;
+                if (removed_commands.length < 3 && cmd == 'xargs')
                     continue;
                 LevelStatus status = current_level.status_without(cmd);
                 if (status == LevelStatus.IMPOSSIBLE)
@@ -112,7 +116,7 @@ class GameLogic {
                 start_level();
                 return "Command ${chosen} removed. Thank you for your sacrifice...";
             } catch (e) {
-                return "Try again";
+                return "Type a number 1-${choice_options.length}";
             }
         }
         try {
@@ -123,7 +127,7 @@ class GameLogic {
 
             if (commands_left < 0 || (commands_left == 0 && !current_level.is_solved(env))) {
                 on_no_commands_left();
-                return "Time is up! Do it in 5 commands, or don't do it at all.";
+                return "Time is up! Do it in 10 commands, or don't do it at all.";
             }
 
             if (current_level.is_solved(env)) {

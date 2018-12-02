@@ -577,7 +577,7 @@ class Man extends BaseCommand {
     String apply(String stdin, Environment env) {
         if (arguments.length < 1)
         {
-            return "What manual page do you want?";
+            return "Available commands: "+ALL_COMMANDS.join(", ");
         }
 
         var cmd_name = arguments[0];
@@ -607,7 +607,8 @@ class EmptyCommand extends BaseCommand {
         assert(arguments.length == 0);
     }
 
-    String apply(String stdin, Environment env) {
+    String execute(String stdin, Environment env) {
+        // doesn't cost mana
         return stdin;
     }
 
@@ -624,7 +625,7 @@ const ALL_COMMANDS = ['cat', 'echo', 'ls', 'touch', 'xargs', 'mkdir',
 
 BaseCommand command_name_and_arguments_to_command(String cmd_name, List<String> arguments) {
     if (GameLogic.removed_commands.contains(cmd_name))
-        throw ParseException("No command named $cmd_name");
+        throw ParseException("No command named $cmd_name. Try 'man'");
     switch(cmd_name) {
         case 'cat': return Cat(arguments); break;
         case 'echo': return Echo(arguments); break;
@@ -641,7 +642,7 @@ BaseCommand command_name_and_arguments_to_command(String cmd_name, List<String> 
         case 'tee': return Tee(arguments); break;
         case 'rmdir': return Rmdir(arguments); break;
         case 'man': return Man(arguments); break;
-        default: throw ParseException("No command named $cmd_name");
+        default: throw ParseException("No command named $cmd_name. Try 'man'");
     }
 }
 
@@ -658,12 +659,15 @@ Command parse_atomic_command(String cmd_text) {
 }
 
 Command parse_command(String cmd_text) {
-    const List<String> forbidden_characters = ["{", "}", "(", ")", "<", '"', "'", "-"];
+    const List<String> forbidden_characters = ["{", "}", "(", ")", "<", '"', "'", "*", "?", "\$", "-"];
     for(var char in forbidden_characters) {
         if(cmd_text.contains(char)) {
-            throw ParseException("Character '$char' not yet supported");
+            throw ParseException("Character '$char' not supported in this shell");
         }
     }
+
+    if (cmd_text.trim() == '')
+        return EmptyCommand([]);
 
     if (cmd_text.contains(">")) {
         if (GameLogic.removed_commands.contains(">"))
