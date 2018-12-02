@@ -5,7 +5,7 @@ import 'GameLogic.dart';
 import 'TextOnCanvas.dart';
 // import 'dart:collection';
 
-const DEBUG_CONSOLE = true;
+const DEBUG_CONSOLE = false;
 
 class Console{
     
