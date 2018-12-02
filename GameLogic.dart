@@ -5,6 +5,8 @@ import 'Console.dart';
 import 'FileView.dart';
 import 'MissionControl.dart';
 import 'WelcomeBanner.dart';
+import 'TextOnCanvas.dart';
+import 'dart:math';
 
 class GameLogic {
     static Environment env;
@@ -51,17 +53,23 @@ class GameLogic {
             if (choice_options.length == 3)
                 break;
         }
+        String sacrifice_demand = "diskd: Low disk space!\nChoose a command to sacrifice:\n";
         print("diskd: Low disk space!\nChoose a command to sacrifice:");
         for (int i = 0;i < choice_options.length;i++) {
             print("\t${i+1}.${choice_options[i]}");
+            sacrifice_demand += "\t${i+1}.${choice_options[i]}\n";
         }
+        num NumLinesOld = con.GetTotalNumLines();
+        con.commands_and_outputs.add([con.current_address, con.current_command, sacrifice_demand]);
+        con.toc.NewestLineYPos = min(con.toc.GetMaxYPos(), con.toc.NewestLineYPos + ((con.GetTotalNumLines() - NumLinesOld) * TextOnCanvas.LINE_HEIGHT));
+        con.PrintAllTerminal();
     }
 
     static on_level_complete() async {
         levels_done.add(current_level);
         await Future.delayed(Duration(seconds: 2));
-        con.ClearHistory();
         start_sacrifice();
+        
     }
 
     static on_no_commands_left() async {
@@ -80,9 +88,10 @@ class GameLogic {
                 String chosen = choice_options[choice - 1];
                 removed_commands.add(chosen);
                 choice_options = null;
+                con.ClearHistory();
                 choose_next_level();
                 start_level();
-                return "Command ${chosen} removed.";
+                return "Command ${chosen} removed. Thank you for your sacrifice...";
             } catch (e) {
                 return "Try again";
             }
