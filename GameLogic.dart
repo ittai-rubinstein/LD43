@@ -10,6 +10,8 @@ class GameLogic {
     static List<Level> levels_done;
     static Console con;
     static List<String> choice_options;
+    // The number of commands left for the current level
+    static num commands_left = 0;
 
     static Level current_level;
     static void reset() {
@@ -23,6 +25,9 @@ class GameLogic {
     static void start_level() {
         env = current_level.setup();
         print("${current_level.description}");
+        
+        // Initiailize to 5 commands per level.
+        commands_left = 5;
         FileView.OnNewCommand();
         if (con != null) {
             con.ClearHistory();
@@ -74,6 +79,12 @@ class GameLogic {
             if (current_level.is_solved(env)) {
                 on_level_complete();
                 cmd_output += "\n\n  SUCCESS!\n\n";
+                return cmd_output;
+            }
+            commands_left--;
+            if (commands_left == 0) {
+                // TODO: add a meaningful message
+                start_level();
             }
             return cmd_output;
         } on ParseException catch (e) {
