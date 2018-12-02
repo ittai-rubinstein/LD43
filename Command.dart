@@ -42,6 +42,26 @@ class CompoundCommand extends Command {
     }
 }
 
+class FileStdoutCommand extends Command {
+    Command command;
+    String stdout_filename;
+    FileStdoutCommand(this.command, this.stdout_filename);
+    String apply(String stdin, Environment env) {
+        String target;
+        try {
+            target = env.absolute_path(stdout_filename);
+        } on FileException catch (e) {
+            return "$stdout_filename: No such file or directory";
+        }
+        if (!env.exists(target))
+            env.create_new_file(target);
+        String output = command.apply(stdin, env);
+        if (env.exists(target))
+            env.write_file(target, output);
+        return "";
+    }
+}
+
 class Echo extends BaseCommand {
     Echo(List<String> arguments) : super(arguments, 'echo');
 
@@ -215,6 +235,27 @@ class Find extends BaseCommand {
         if(ret.length == 0)
             return "";
         return ret.join("\n") + "\n";
+    }
+}
+
+class Tee extends BaseCommand {
+    Tee(List<String> arguments) : super(arguments, 'tee');
+
+    String apply(String stdin, Environment env) {
+        if (arguments.length != 1)
+            return "tee: Incorrect number of arguments";
+        String target;
+        try {
+            target = env.absolute_path(arguments[0]);
+        } on FileException catch (e) {
+            return "tee: Could not open '${arguments[0]}'";
+        }
+        if (!env.exists(target))
+            env.create_new_file(target);
+        if (env.get_type(target) == NodeType.DIRECTORY)
+            return "tee: Could not open '$target': Is a directory";
+        env.write_file(target, stdin);
+        return stdin;
     }
 }
 
@@ -481,6 +522,7 @@ BaseCommand command_name_and_arguments_to_command(String cmd_name, List<String> 
         case 'cp': return Cp(arguments); break;
         case 'rm': return Rm(arguments); break;
         case 'mv': return Mv(arguments); break;
+        case 'tee': return Tee(arguments); break;
         default: throw ParseException("No command named $cmd_name");
     }
 }
@@ -498,11 +540,22 @@ Command parse_atomic_command(String cmd_text) {
 }
 
 Command parse_command(String cmd_text) {
-    const List<String> forbidden_characters = ["{", "}", "(", ")", "<", ">", '"', "'", "-"];
+    const List<String> forbidden_characters = ["{", "}", "(", ")", "<", '"', "'", "-"];
     for(var char in forbidden_characters) {
         if(cmd_text.contains(char)) {
             throw ParseException("Character '$char' not yet supported");
         }
+    }
+
+    if (cmd_text.contains(">")) {
+        List<String> parts = cmd_text.split(">");
+        if (parts.length > 2)
+            throw ParseException("Too many occurences of >");
+        String filename = parts[1].trim();
+        String cmd = parts[0].trim();
+        if (filename.contains(' '))
+            throw ParseException("Can only redirect into one file");
+        return FileStdoutCommand(parse_command(cmd), filename);
     }
 
     num pipe_loc = cmd_text.indexOf('|');

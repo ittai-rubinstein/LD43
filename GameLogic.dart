@@ -15,10 +15,17 @@ class GameLogic {
         env = level.setup();
     }
 
+    static on_level_complete() {
+        print("Well done");
+    }
+
     static String run_command(String cmd) {
         try {
             Command command = parse_command(cmd);
-            return command.apply("", env);
+            String cmd_output = command.apply("", env);
+            if (level.is_solved(env))
+                on_level_complete();
+            return cmd_output;
         } on ParseException catch (e) {
             return e.cause;
         }
