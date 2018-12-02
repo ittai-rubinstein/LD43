@@ -3,7 +3,7 @@ import 'FileView.dart';
 import 'dart:math';
 import 'GameLogic.dart';
 import 'TextOnCanvas.dart';
-// import 'dart:collection'; 
+// import 'dart:collection';
 
 const DEBUG_CONSOLE = false;
 
@@ -22,17 +22,19 @@ class Console{
     TextOnCanvas toc = new TextOnCanvas("Console");
 
     Console(){
-        
+        // Set up a handler that will redraw the contents of the window on resize.
+        window.onResize.listen(this.ResizeHandler);
+
         // Set the keyboard handler to listen to keystrokes:
         window.onKeyDown.listen(this.KeyboardHandler);
         PrintAllTerminal();
         // print("Character width should be ${ctx.measureText("a").width}");
 
         FileView.DrawFileView();
-        
+
     }
 
-    
+
 
     /**
      * Prints the result of a command (different color pallet from commands?)
@@ -121,6 +123,11 @@ class Console{
         String CommandPrint = GetUserMachine() + ":" + current_address + "\$ " + current_command;
         num_lines += toc.NumLinesForString(CommandPrint);
         return num_lines;
+    }
+
+    void ResizeHandler(Event event) {
+        this.PrintAllTerminal();
+        FileView.DrawFileView();
     }
 
     // Handles the Keyboard interrupts.
@@ -212,8 +219,8 @@ class Console{
      */
     void PrintSingleCharToCommand(String new_char){
         // Make sure that character is actually on screen.
-        
-        if ((toc.GetMaxXPos() > toc.XPosCurrPrint + TextOnCanvas.CHARACTER_WIDTH) && 
+
+        if ((toc.GetMaxXPos() > toc.XPosCurrPrint + TextOnCanvas.CHARACTER_WIDTH) &&
                     (toc.NewestLineYPos == min(toc.GetMaxYPos(), max(TextOnCanvas.Y_MIN_POS, toc.NewestLineYPos)))) {
             toc.PrintStringToScreenSimple(new_char);
         } else {
