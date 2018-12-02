@@ -1,9 +1,11 @@
 import 'Environment.dart';
 import 'Level.dart';
 import 'Command.dart';
+import 'Console.dart';
 
 class GameLogic {
     static Environment env;
+    static Console console;
 
     static SwapLevel level;
     static void reset() {
@@ -17,6 +19,7 @@ class GameLogic {
 
     static on_level_complete() {
         print("Well done");
+        console.ClearHistory();
     }
 
     static String run_command(String cmd) {
