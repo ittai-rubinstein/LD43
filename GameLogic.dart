@@ -9,7 +9,7 @@ import 'WelcomeBanner.dart';
 class GameLogic {
     static Environment env;
     static List<String> removed_commands = [];
-    static List<Level> levels_done;
+    static int level_num;
     static Console con;
     static List<String> choice_options;
     // The number of commands left for the current level
@@ -17,9 +17,9 @@ class GameLogic {
 
     static Level current_level;
     static void reset() {
-        levels_done = [];
+        level_num = 0;
+        current_level = LEVELS[0];
         removed_commands = [];
-        choose_next_level();
         start_level();
         con = new Console();
     }
@@ -43,14 +43,35 @@ class GameLogic {
     }
 
     static void start_sacrifice() {
+        choose_next_level();
         choice_options = [];
-        for (String cmd in ALL_COMMANDS) {
+        List<String> command_order = ALL_COMMANDS.sublist(0);
+        command_order.shuffle();
+        for (String cmd in command_order) {
             if (removed_commands.contains(cmd))
                 continue;
+            LevelStatus status = current_level.status_without(cmd);
+            if (status == LevelStatus.IMPOSSIBLE || status == LevelStatus.SAME)
+                continue;
+            print("Good sacrifice: $cmd");
             choice_options.add(cmd);
             if (choice_options.length == 3)
                 break;
         }
+
+        if (choice_options.length < 3) {
+            for (String cmd in command_order) {
+                if (removed_commands.contains(cmd))
+                    continue;
+                LevelStatus status = current_level.status_without(cmd);
+                if (status == LevelStatus.IMPOSSIBLE)
+                    continue;
+                if (choice_options.length == 3)
+                    break;
+                choice_options.add(cmd);
+            }
+        }
+
         print("diskd: Low disk space!\nChoose a command to sacrifice:");
         for (int i = 0;i < choice_options.length;i++) {
             print("\t${i+1}.${choice_options[i]}");
@@ -58,7 +79,6 @@ class GameLogic {
     }
 
     static on_level_complete() async {
-        levels_done.add(current_level);
         await Future.delayed(Duration(seconds: 2));
         con.ClearHistory();
         start_sacrifice();
@@ -80,7 +100,6 @@ class GameLogic {
                 String chosen = choice_options[choice - 1];
                 removed_commands.add(chosen);
                 choice_options = null;
-                choose_next_level();
                 start_level();
                 return "Command ${chosen} removed.";
             } catch (e) {
@@ -90,6 +109,8 @@ class GameLogic {
         try {
             Command command = parse_command(input);
             String cmd_output = command.execute("", env);
+            if (command is Man)
+                commands_left++; // a lone 'man' isn't counted;
 
             if (commands_left < 0 || (commands_left == 0 && !current_level.is_solved(env))) {
                 on_no_commands_left();
@@ -108,11 +129,16 @@ class GameLogic {
     }
 
     static void choose_next_level() {
-        for (Level level in LEVELS) {
-            if (levels_done.contains(level))
-                continue;
-            current_level = level;
-            break;
+        int solved_level = level_num;
+        level_num++;
+        while (true) {
+            if (level_num == LEVELS.length)
+                level_num = 0;
+            if (LEVELS[level_num].status_without('nonexistent-command') != LevelStatus.IMPOSSIBLE)
+                break;
+            if (level_num == solved_level)
+                print("You win");
         }
+        current_level = LEVELS[level_num];
     }
 }

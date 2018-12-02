@@ -1,14 +1,52 @@
 import 'Environment.dart';
 import 'Command.dart';
+import 'GameLogic.dart';
+
+enum LevelStatus {
+    SAME, HARDER, IMPOSSIBLE
+}
+
+bool contains_any(String line, List<String> things) {
+    for (String thing in things)
+        if (line.contains(thing))
+            return true;
+    return false;
+}
 
 abstract class Level {
     List<List<String>> solutions;
     String description;
     Environment setup();
     bool is_solved(Environment env);
+    LevelStatus status_without(String cmd) {
+        bool solvable = false;
+        bool harder = false;
+        for (List<String> sol in solutions) {
+            bool applicable = true;
+            for (String line in sol) {
+                if (line.contains(cmd)) {
+                    applicable = false;
+                    harder = true;
+                    // don't break - might not be harder after all
+                }
+                if (contains_any(line, GameLogic.removed_commands)) {
+                    applicable = false;
+                    harder = false;
+                    break;
+                }
+            }
+            if (applicable)
+                solvable = true;
+        }
+        if (!solvable)
+            return LevelStatus.IMPOSSIBLE;
+        if (harder)
+            return LevelStatus.HARDER;
+        return LevelStatus.SAME;
+    }
 }
 
-class SwapLevel implements Level{
+class SwapLevel extends Level{
     String description = "Swap the contents of the two files: Put the contents of 'moon'"
                          " in a file named 'sun' and vice versa.";
 
@@ -50,7 +88,7 @@ class SwapLevel implements Level{
     }
 }
 
-class FileContentLevel implements Level{
+class FileContentLevel extends Level{
     String description = "Create a file named 'hello' with the word 'world' in it.";
 
     List<List<String>> solutions = [
@@ -72,7 +110,7 @@ class FileContentLevel implements Level{
     }
 }
 
-class RemoveAllButLevel implements Level {
+class RemoveAllButLevel extends Level {
     String description = "Remove the directories d1 - d9, while maitaining"
                         " a direcory called 'innocent'. We don't care about"
                         " the contents of the directories";
@@ -118,12 +156,12 @@ class RemoveAllButLevel implements Level {
     }
 }
 
-class MoveDirectoryLevel implements Level {
-    String description = "TODO";
+class MoveDirectoryLevel extends Level {
+    String description = "Create a directory named 'good' with the files file1 - file9"
+                         " from /bad";
 
     List<List<String>> solutions = [
-        ["mv bad good"],
-        ["mkdir good", "find bad"]
+        ["mv bad good"]
     ];
 
     int BASE_EMOJI = 0x1f550;
@@ -134,7 +172,7 @@ class MoveDirectoryLevel implements Level {
         for (int i = 1;i < 10;i++) {
             env.create_new_file("/bad/file$i", String.fromCharCode(BASE_EMOJI+i));
         }
-        return null;
+        return env;
     }
 
     bool is_solved(Environment env) {
@@ -150,9 +188,10 @@ class MoveDirectoryLevel implements Level {
     }
 }
 
-List<Level> LEVELS = [SwapLevel(), FileContentLevel(), MoveDirectoryLevel(), RemoveAllButLevel()];
+List<Level> LEVELS = [FileContentLevel(), SwapLevel(),  MoveDirectoryLevel(), RemoveAllButLevel()];
 
 void test_levels() {
+    GameLogic.commands_left = 1000000;
     for (Level level in LEVELS) {
         for (var sol in level.solutions) {
             Environment env = level.setup();
