@@ -1,5 +1,6 @@
 import 'dart:html';
 import 'dart:math';
+import 'GameLogic.dart';
 // import 'dart:collection'; 
 
 const DEBUG_CONSOLE = false;
@@ -63,17 +64,7 @@ class Console{
         PrintAllTerminal();
         // print("Character width should be ${ctx.measureText("a").width}");
 
-        // Junk. To be removed...
-
-        // PrintCommandLine("~", "echo hello world");
-        // print(canvas.width);
-        // print(canvas.height);
-        // print(canvas.clientWidth);
-        // print(canvas.clientHeight);
-        // ctx.font = "18px Times New Roman";
-        // ctx.fillStyle = "red";
-        // ctx.fillText(" " + "a" * 50,7,15);
-        // ctx.fillText(" " + "a" * 50,7,30);
+        
     }
 
     /**
@@ -287,11 +278,9 @@ class Console{
         }
     }
 
-    String SendCommand(String command){
-        if (DEBUG_CONSOLE) {
-            print('Send command $command');
-        }
-        return "Answer($command)";
+    String SendCommand(String command) {
+        String cmd_output = GameLogic.run_command(command);
+        return cmd_output;
     }
     // A method that handles the printing of all the console to the string
     void PrintEntireConsoleToScreen(){
